@@ -253,6 +253,40 @@ jobs:
 
           PYEOF
 
+      - name: Convert hymn lyrics to Traditional Chinese
+        run: |
+          pip install opencc-python-reimplemented -q
+          python3 << 'PYEOF'
+          import opencc, os, glob
+
+          converter = opencc.OpenCC('s2twp')  # Simplified → Traditional (Taiwan phrases)
+
+          LYRICS_DIRS = [
+              'hymnchtv-decompiled/assets/lyrics_bb_text',
+              'hymnchtv-decompiled/assets/lyrics_db_text',
+              'hymnchtv-decompiled/assets/lyrics_er_text',
+              'hymnchtv-decompiled/assets/lyrics_xb_text',
+              'hymnchtv-decompiled/assets/lyrics_xg_text',
+              'hymnchtv-decompiled/assets/lyrics_yb_text',
+              'hymnchtv-decompiled/assets/lyrics_toc',
+          ]
+
+          total = 0
+          for d in LYRICS_DIRS:
+              if not os.path.isdir(d):
+                  print(f"Skipping missing dir: {d}")
+                  continue
+              for fpath in sorted(glob.glob(os.path.join(d, '*.txt'))):
+                  with open(fpath, encoding='utf-8') as f:
+                      content = f.read()
+                  converted = converter.convert(content)
+                  if converted != content:
+                      with open(fpath, 'w', encoding='utf-8') as f:
+                          f.write(converted)
+                      total += 1
+          print(f"Converted {total} lyrics files to Traditional Chinese")
+          PYEOF
+
       - name: Recompile APK
         run: |
           java -jar apktool.jar b hymnchtv-decompiled -o hymnchtv-tw-unsigned.apk
