@@ -424,11 +424,15 @@ function updateDisplay() {
 // ──────────────────────────────────────────────────────────────
 // OPEN HYMN FROM KEYPAD
 // ──────────────────────────────────────────────────────────────
+const DB_FU_OFFSET = 780; // 附1~附6 stored as db781~db786
+
 function openHymnByNum(cat) {
   const n = parseInt(numInput);
   if (!n || n < 1) { alert('請先輸入詩歌編號'); return; }
+  const isFu = hasFu && cat === 'db';
+  if (isFu && (n < 1 || n > 6)) { alert('大本詩歌附詩歌編號為 1 至 6'); return; }
   numInput = ''; hasFu = false; updateDisplay();
-  openHymn(cat, n);
+  openHymn(cat, isFu ? DB_FU_OFFSET + n : n);
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -439,8 +443,10 @@ async function openHymn(cat, num) {
   const catInfo = CATS[cat];
 
   // Update header
+  const isFuHymn = cat === 'db' && num > DB_FU_OFFSET;
+  const displayNum = isFuHymn ? '附 ' + (num - DB_FU_OFFSET) : '第 ' + num;
   document.getElementById('content-cat').textContent = catInfo.label;
-  document.getElementById('content-title').textContent = '第 ' + num + ' 首';
+  document.getElementById('content-title').textContent = displayNum + ' 首';
   document.getElementById('yt-btn').style.display = 'none';
   document.getElementById('lyrics-panel').classList.remove('open');
   document.getElementById('lyrics-toggle').textContent = '▼ 顯示歌詞';
@@ -518,7 +524,9 @@ function showPage(idx) {
     }
   };
   img.onerror = () => {
-    loading.innerHTML = '<div style="text-align:center;color:#90caf9;padding:20px">🎵<br>第 ' + currentNum + ' 首<br><small style="color:#666">樂譜圖片暫無</small></div>';
+    const isFuErr = currentCat === 'db' && currentNum > DB_FU_OFFSET;
+    const displayNumErr = isFuErr ? '附 ' + (currentNum - DB_FU_OFFSET) : '第 ' + currentNum;
+    loading.innerHTML = '<div style="text-align:center;color:#90caf9;padding:20px">🎵<br>' + displayNumErr + ' 首<br><small style="color:#666">樂譜圖片暫無</small></div>';
   };
   img.src = currentPages[idx];
 }
