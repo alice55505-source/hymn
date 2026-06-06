@@ -186,29 +186,20 @@ jobs:
               flags=re.DOTALL
           )
 
-          # Write existing zh-rTW file if it exists, merge otherwise
-          if os.path.exists(dst):
-              with open(dst, encoding='utf-8') as f:
-                  existing = f.read()
-              # Get existing string names
-              existing_names = set(re.findall(r'<string name="([^"]+)"', existing))
-              # Get all strings from result
-              new_strings = re.findall(r'<string name="([^"]+)"[^>]*>.*?</string>', result, re.DOTALL)
-              # Add new strings not already in existing
-              new_entries = []
-              for m in re.finditer(r'    (<string name="([^"]+)"[^>]*>.*?</string>)', result, re.DOTALL):
-                  if m.group(2) not in existing_names:
-                      new_entries.append(m.group(1))
-              if new_entries:
-                  insert = '\n    '.join(new_entries)
-                  existing = existing.replace('</resources>', f'    {insert}\n</resources>')
-              with open(dst, 'w', encoding='utf-8') as f:
-                  f.write(existing)
-              print(f"Merged {len(new_entries)} new strings into {dst}")
-          else:
-              with open(dst, 'w', encoding='utf-8') as f:
-                  f.write(result)
-              print(f"Wrote {dst}")
+          # Write zh-rTW (overwrite completely with converted content)
+          with open(dst, 'w', encoding='utf-8') as f:
+              f.write(result)
+          print(f"Wrote {dst}")
+
+          # Also overwrite values/strings.xml in-place so the in-app language
+          # picker ("中文(简体)") also shows Traditional Chinese
+          tw_result = result
+          # Rename the language option label from 简体 to 繁體
+          tw_result = tw_result.replace('中文(简体)', '中文(繁體)')
+          tw_result = tw_result.replace('中文（简体）', '中文（繁體）')
+          with open(src, 'w', encoding='utf-8') as f:
+              f.write(tw_result)
+          print(f"Updated {src} with Traditional Chinese")
 
           PYEOF
 
