@@ -11,9 +11,19 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>詩歌本</title>
 <style>
+:root {
+  --bg:        #2a1c11;   /* 深焙咖啡 */
+  --surface:   #3d2a1a;   /* 奶茶底色 */
+  --surface2:  #4f3620;   /* 淺一層暖棕 */
+  --accent:    #c9a87a;   /* 焦糖金 */
+  --accent2:   #a07850;   /* 深一點焦糖 */
+  --text:      #f0e6d3;   /* 象牙白 */
+  --text2:     #b89870;   /* 奶茶色 */
+  --text3:     #7a5c3a;   /* 深茶色（次要） */
+}
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
-html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
-  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
+  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', 'Georgia', serif; }
 
 /* ── MAIN SCREEN ── */
 #main-screen {
@@ -23,17 +33,17 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 
 /* hint */
 #hint {
-  text-align: center; font-size: 12px; color: #90caf9;
+  text-align: center; font-size: 12px; color: var(--text3);
   padding: 4px 0; line-height: 1.4;
 }
 
 /* number display */
 #num-display {
   text-align: center; font-size: 48px; font-weight: bold;
-  color: #fff; min-height: 60px; letter-spacing: 6px;
+  color: var(--accent); min-height: 60px; letter-spacing: 6px;
   padding: 4px 0;
 }
-#num-display.empty { color: #5c6bc0; font-size: 18px; font-weight: normal; letter-spacing: 0; }
+#num-display.empty { color: var(--text3); font-size: 18px; font-weight: normal; letter-spacing: 0; }
 
 /* search row */
 #search-row {
@@ -41,13 +51,13 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 }
 #search-input {
   flex: 1; height: 38px; padding: 0 10px;
-  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 8px; color: #fff; font-size: 14px; outline: none;
+  background: rgba(200,160,100,0.1); border: 1px solid rgba(200,160,100,0.3);
+  border-radius: 8px; color: var(--text); font-size: 14px; outline: none;
 }
-#search-input::placeholder { color: rgba(255,255,255,0.5); }
+#search-input::placeholder { color: var(--text3); }
 #toc-btn, #search-btn {
-  height: 38px; padding: 0 14px; border: 1px solid rgba(255,255,255,0.4);
-  border-radius: 8px; background: rgba(255,255,255,0.15); color: #fff;
+  height: 38px; padding: 0 14px; border: 1px solid rgba(200,160,100,0.35);
+  border-radius: 8px; background: rgba(200,160,100,0.15); color: var(--accent);
   font-size: 13px; cursor: pointer; white-space: nowrap;
 }
 
@@ -62,38 +72,37 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
   flex: 1; border-radius: 10px; border: none;
   font-weight: bold; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px; color: #fff;
-  background: rgba(255,255,255,0.18);
+  font-size: 28px; color: var(--text);
+  background: rgba(200,160,100,0.16);
   transition: background 0.1s, transform 0.1s;
   min-height: 0;
 }
-.kb-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.96); }
+.kb-btn:active { background: rgba(200,160,100,0.38); transform: scale(0.96); }
 
 /* special buttons */
-.btn-del  { background: rgba(239,83,80,0.7); font-size: 22px; }
-.btn-fu   { background: rgba(255,193,7,0.5); font-size: 22px; }
+.btn-del  { background: rgba(160,70,50,0.6); font-size: 22px; }
+.btn-fu   { background: rgba(185,140,50,0.45); font-size: 22px; }
 
 /* category buttons */
 .cat-btn {
   flex: 1; border-radius: 10px; border: none;
   font-weight: bold; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; color: #fff;
+  font-size: 18px; color: var(--text);
   transition: background 0.1s, transform 0.1s;
   min-height: 0;
 }
-.cat-btn:active { transform: scale(0.96); filter: brightness(1.2); }
-.cat-db  { background: #c62828; }
-.cat-bb  { background: #1565c0; }
-.cat-xg  { background: #2e7d32; }
-.cat-xb  { background: #6a1b9a; }
-.cat-er  { background: #e65100; }
-.cat-yb  { background: #00695c; }
+.cat-btn:active { transform: scale(0.96); filter: brightness(1.15); }
+.cat-db  { background: #7a3020; }  /* 深磚紅 */
+.cat-bb  { background: #5a3d28; }  /* 摩卡棕 */
+.cat-xb  { background: #6b4e2a; }  /* 焦糖棕 */
+.cat-er  { background: #7a5e1a; }  /* 琥珀金 */
+.cat-xg  { background: #4a3525; }  /* 黑巧克力 */
 
 /* ── CONTENT VIEW (score viewer) ── */
 #content-view {
   position: fixed; inset: 0; z-index: 100;
-  background: #000;
+  background: #1a1008;
   display: flex; flex-direction: column;
   transform: translateY(100%);
   transition: transform 0.3s ease;
@@ -102,19 +111,20 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 
 #content-header {
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px; background: #1a237e;
+  padding: 6px 10px; background: var(--surface);
   flex-shrink: 0; min-height: 44px;
+  border-bottom: 1px solid rgba(200,160,100,0.2);
 }
 #back-btn {
-  background: none; border: none; color: #90caf9;
+  background: none; border: none; color: var(--accent);
   font-size: 28px; cursor: pointer; padding: 0 6px;
   line-height: 1;
 }
 #content-info { flex: 1; }
-#content-cat  { font-size: 11px; color: #90caf9; }
-#content-title { font-size: 15px; font-weight: bold; color: #fff; }
+#content-cat  { font-size: 11px; color: var(--text2); }
+#content-title { font-size: 15px; font-weight: bold; color: var(--text); }
 #yt-btn {
-  background: #cc0000; color: #fff; border: none;
+  background: #7a3020; color: var(--text); border: none;
   border-radius: 6px; padding: 6px 10px; font-size: 12px;
   cursor: pointer; white-space: nowrap; display: none;
 }
@@ -133,12 +143,12 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  color: #90caf9; font-size: 16px; gap: 12px;
+  color: var(--accent); font-size: 16px; gap: 12px;
 }
 .spinner {
   width: 36px; height: 36px;
-  border: 3px solid rgba(255,255,255,0.2);
-  border-top-color: #90caf9;
+  border: 3px solid rgba(200,160,100,0.2);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -147,7 +157,7 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 /* page indicator */
 #page-indicator {
   position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-  background: rgba(0,0,0,0.6); color: #fff;
+  background: rgba(42,28,17,0.8); color: var(--accent);
   padding: 3px 10px; border-radius: 12px; font-size: 12px;
   pointer-events: none;
 }
@@ -155,11 +165,11 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 /* nav arrows */
 #nav-prev, #nav-next {
   position: absolute; top: 50%; transform: translateY(-50%);
-  background: rgba(0,0,0,0.5); color: #fff; border: none;
+  background: rgba(42,28,17,0.65); color: var(--accent); border: none;
   border-radius: 50%; width: 40px; height: 40px;
   font-size: 22px; cursor: pointer; display: flex;
   align-items: center; justify-content: center;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 #nav-prev { left: 6px; }
 #nav-next { right: 6px; }
@@ -167,93 +177,94 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 /* lyrics toggle */
 #lyrics-panel {
   max-height: 0; overflow: hidden; transition: max-height 0.3s;
-  background: #111; color: #ddd;
+  background: var(--surface); color: var(--text);
 }
 #lyrics-panel.open { max-height: 40vh; overflow-y: auto; }
 #lyrics-content { padding: 12px 16px; font-size: 15px; line-height: 1.9; white-space: pre-wrap; }
 #lyrics-toggle {
-  background: #1a237e; border: none; color: #90caf9;
-  width: 100%; padding: 6px; font-size: 13px; cursor: pointer;
+  background: var(--surface); border: none; border-top: 1px solid rgba(200,160,100,0.2);
+  color: var(--accent2); width: 100%; padding: 6px; font-size: 13px; cursor: pointer;
   flex-shrink: 0;
 }
 
 /* TOC overlay */
 #toc-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.6);
+  background: rgba(20,12,5,0.75);
   display: none; flex-direction: column;
 }
 #toc-overlay.open { display: flex; }
 #toc-panel {
-  background: #1a237e; margin-top: auto;
+  background: var(--surface); margin-top: auto;
   max-height: 80vh; display: flex; flex-direction: column;
   border-radius: 16px 16px 0 0;
+  border-top: 1px solid rgba(200,160,100,0.25);
 }
 #toc-header {
   display: flex; align-items: center; padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-bottom: 1px solid rgba(200,160,100,0.18);
 }
-#toc-title { flex: 1; font-size: 16px; font-weight: bold; }
-#toc-close { background: none; border: none; color: #90caf9; font-size: 24px; cursor: pointer; }
+#toc-title { flex: 1; font-size: 16px; font-weight: bold; color: var(--text); }
+#toc-close { background: none; border: none; color: var(--accent2); font-size: 24px; cursor: pointer; }
 #toc-cat-btns { display: flex; gap: 6px; padding: 10px 16px; overflow-x: auto; }
 .toc-cat-btn {
   padding: 6px 14px; border-radius: 16px; border: none;
-  color: #fff; font-size: 13px; cursor: pointer; white-space: nowrap;
-  opacity: 0.6;
+  color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap;
+  opacity: 0.55;
 }
 .toc-cat-btn.active { opacity: 1; font-weight: bold; }
 #toc-search { margin: 0 16px 8px; height: 36px; padding: 0 12px;
-  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 8px; color: #fff; font-size: 14px; outline: none; }
-#toc-search::placeholder { color: rgba(255,255,255,0.4); }
+  background: rgba(200,160,100,0.1); border: 1px solid rgba(200,160,100,0.28);
+  border-radius: 8px; color: var(--text); font-size: 14px; outline: none; }
+#toc-search::placeholder { color: var(--text3); }
 #toc-list { flex: 1; overflow-y: auto; }
 .toc-item {
   display: flex; align-items: center; padding: 10px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+  border-bottom: 1px solid rgba(200,160,100,0.1); cursor: pointer;
   gap: 12px;
 }
-.toc-item:active { background: rgba(255,255,255,0.1); }
+.toc-item:active { background: rgba(200,160,100,0.1); }
 .toc-num {
   min-width: 44px; height: 32px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: bold; color: #fff;
-  background: rgba(255,255,255,0.15);
+  font-size: 13px; font-weight: bold; color: var(--accent);
+  background: rgba(200,160,100,0.15);
 }
-.toc-name { font-size: 14px; color: #e3f2fd; }
+.toc-name { font-size: 14px; color: var(--text2); }
 .toc-section {
-  padding: 6px 16px; font-size: 11px; color: #90caf9;
-  background: rgba(0,0,0,0.2); letter-spacing: 1px;
+  padding: 6px 16px; font-size: 11px; color: var(--accent2);
+  background: rgba(20,12,5,0.4); letter-spacing: 1px;
   position: sticky; top: 0;
 }
 
 /* PWA install banner */
 #install-banner {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
-  background: #283593; border-top: 1px solid rgba(255,255,255,0.2);
+  background: var(--surface2); border-top: 1px solid rgba(200,160,100,0.25);
   padding: 10px 14px; display: flex; align-items: center; gap: 10px;
   transform: translateY(100%); transition: transform 0.4s;
 }
 #install-banner.show { transform: translateY(0); }
-.install-text { flex: 1; font-size: 13px; }
-.install-text strong { font-size: 14px; display: block; }
+.install-text { flex: 1; font-size: 13px; color: var(--text2); }
+.install-text strong { font-size: 14px; display: block; color: var(--text); }
 #install-btn {
-  background: #90caf9; color: #1a237e; border: none;
+  background: var(--accent); color: var(--bg); border: none;
   border-radius: 8px; padding: 7px 14px; font-weight: bold;
   font-size: 13px; cursor: pointer;
 }
-#dismiss-install { background: none; border: none; color: #90caf9; font-size: 20px; cursor: pointer; }
+#dismiss-install { background: none; border: none; color: var(--accent2); font-size: 20px; cursor: pointer; }
 </style>
 </head>
 <body>
 
 <!-- MAIN SCREEN -->
 <div id="main-screen">
-  <div id="hint">按目錄選項，或輸入（附）編號後按大本、補充、新詩、新頌、兒詩或英文</div>
+  <div id="hint">按目錄選項，或輸入（附）編號後按大本、補充、新詩、新頌或兒詩</div>
 
   <div id="num-display" class="empty">輸入詩歌編號 ↓</div>
 
   <div id="search-row">
-    <input id="search-input" placeholder="歌詞搜尋…" type="search" autocomplete="off">
+    <input id="search-input" placeholder="搜尋詩歌名稱或歌詞…" type="search" autocomplete="off" onkeydown="if(event.key==='Enter')doSearch()">
     <button id="search-btn" onclick="doSearch()">搜尋</button>
     <button id="toc-btn" onclick="openToc('db')">目錄</button>
   </div>
@@ -282,12 +293,11 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
     </div>
     <!-- Col 4: categories -->
     <div class="kb-col cat-col">
-      <button class="cat-btn cat-er" onclick="openHymnByNum('er')">兒詩</button>
-      <button class="cat-btn cat-xb" onclick="openHymnByNum('xb')">新頌</button>
-      <button class="cat-btn cat-xg" onclick="openHymnByNum('xg')">新詩</button>
-      <button class="cat-btn cat-yb" onclick="openHymnByNum('yb')">英文</button>
-      <button class="cat-btn cat-bb" onclick="openHymnByNum('bb')">補充</button>
       <button class="cat-btn cat-db" onclick="openHymnByNum('db')">大本</button>
+      <button class="cat-btn cat-bb" onclick="openHymnByNum('bb')">補充</button>
+      <button class="cat-btn cat-xb" onclick="openHymnByNum('xb')">新頌</button>
+      <button class="cat-btn cat-er" onclick="openHymnByNum('er')">兒詩</button>
+      <button class="cat-btn cat-xg" onclick="openHymnByNum('xg')">新詩</button>
     </div>
   </div>
 </div>
@@ -333,7 +343,6 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
       <button class="toc-cat-btn cat-xg" data-cat="xg" onclick="switchTocCat('xg')">新詩</button>
       <button class="toc-cat-btn cat-xb" data-cat="xb" onclick="switchTocCat('xb')">新頌</button>
       <button class="toc-cat-btn cat-er" data-cat="er" onclick="switchTocCat('er')">兒詩</button>
-      <button class="toc-cat-btn cat-yb" data-cat="yb" onclick="switchTocCat('yb')">英文</button>
     </div>
     <input id="toc-search" placeholder="搜尋詩歌名稱或編號…" oninput="filterToc(this.value)">
     <div id="toc-list"></div>
@@ -362,11 +371,11 @@ const CATS = {
   xg: { label: '新詩',     score: 'lyrics_xg_score', text: 'lyrics_xg_text', prefix: 'xg', tocFile: 'toc_xg_eng2ch.txt' },
   xb: { label: '新頌',     score: 'lyrics_xb_score', text: 'lyrics_xb_text', prefix: 'xb', tocFile: 'toc_xb_pinyin.txt' },
   er: { label: '兒詩',     score: 'lyrics_er_score', text: 'lyrics_er_text', prefix: 'er', tocFile: 'toc_er_stroke.txt' },
-  yb: { label: '英文',     score: 'lyrics_yb_score', text: 'lyrics_yb_text', prefix: 'yb', tocFile: 'toc_yb_toc.txt' },
 };
 
 // er score uses NO prefix (just "1.png", not "er1.png")
 const SCORE_NOPREFIX = { er: true };
+
 
 // ──────────────────────────────────────────────────────────────
 // STATE
@@ -382,20 +391,67 @@ let tocCache = {};
 let tocCurrentCat = 'db';
 let tocAllHymns = [];
 let deferredInstall = null;
+let lyricsIndex = null; // loaded on first content search; array of {cat,num,title,body}
 
 // ──────────────────────────────────────────────────────────────
-// SIMPLIFIED → TRADITIONAL (minimal hymn-domain map)
+// SIMPLIFIED → TRADITIONAL
 // ──────────────────────────────────────────────────────────────
-const S2T = {'爱':'愛','来':'來','时':'時','动':'動','话':'話','说':'說','这':'這','个':'個','们':'們',
-'为':'為','关':'關','长':'長','进':'進','过':'過','还':'還','从':'從','发':'發','开':'開','对':'對',
-'现':'現','认':'認','给':'給','让':'讓','带':'帶','记':'記','见':'見','听':'聽','变':'變','显':'顯',
-'远':'遠','当':'當','学':'學','实':'實','称':'稱','传':'傳','归':'歸','灵':'靈','圣':'聖','赞':'讚',
-'颂':'頌','诗':'詩','经':'經','节':'節','礼':'禮','荣':'榮','恩':'恩','丰':'豐','满':'滿','喜':'喜',
-'乐':'樂','怜':'憐','悯':'憫','宽':'寬','饶':'饒','净':'淨','洁':'潔','纯':'純','声':'聲','万':'萬',
-'来':'來','无':'無','难':'難','虽':'雖','却':'卻','须':'須','处':'處','该':'該','属':'屬','举':'舉',
-'华':'華','宝':'寶','亲':'親','顺':'順','紧':'緊','随':'隨','着':'著','祷':'禱','众':'眾','建':'建',
-'国':'國','导':'導','领':'領','临':'臨','热':'熱','应':'應','义':'義','终':'終','极':'極','间':'間',
-'问':'問','题':'題','谢':'謝','穌':'穌','辞':'辭','词':'詞','离':'離','单':'單'};
+const S2T = {
+  // A–G
+  '爱':'愛','碍':'礙','肮':'骯','奥':'奧','罢':'罷','备':'備','贝':'貝','笔':'筆',
+  '毕':'畢','边':'邊','变':'變','标':'標','别':'別','宾':'賓','并':'並','补':'補',
+  '财':'財','产':'產','层':'層','长':'長','尝':'嘗','场':'場','车':'車','尘':'塵',
+  '称':'稱','处':'處','传':'傳','创':'創','从':'從','达':'達','带':'帶','当':'當',
+  '导':'導','灯':'燈','敌':'敵','递':'遞','点':'點','电':'電','叠':'疊','订':'訂',
+  '动':'動','断':'斷','对':'對','吨':'噸','发':'發','丰':'豐','风':'風','妇':'婦',
+  '该':'該','刚':'剛','给':'給','关':'關','广':'廣','归':'歸','国':'國',
+  '过':'過',
+  // H–J
+  '号':'號','汉':'漢','欢':'歡','还':'還','华':'華','话':'話','划':'劃','怀':'懷',
+  '获':'獲','机':'機','极':'極','计':'計','际':'際','继':'繼','间':'間','监':'監',
+  '舰':'艦','将':'將','节':'節','尽':'盡','进':'進','经':'經','旧':'舊','举':'舉',
+  // K–M
+  '开':'開','颗':'顆','块':'塊','宽':'寬','来':'來','览':'覽','烂':'爛','劳':'勞',
+  '乐':'樂','类':'類','历':'歷','联':'聯','怜':'憐','练':'練','领':'領','临':'臨',
+  '灵':'靈','录':'錄','乱':'亂','满':'滿','们':'們','灭':'滅','庙':'廟','悯':'憫',
+  // N–Q
+  '难':'難','脑':'腦','宁':'寧','农':'農','诺':'諾','盘':'盤','飘':'飄','气':'氣',
+  '启':'啟','钱':'錢','强':'強','亲':'親','请':'請','庆':'慶','穷':'窮','趋':'趨',
+  // R–S
+  '让':'讓','热':'熱','认':'認','赏':'賞','声':'聲','胜':'勝','时':'時','实':'實',
+  '识':'識','书':'書','顺':'順','说':'說','随':'隨','须':'須','虽':'雖',
+  // T–W
+  '态':'態','谈':'談','题':'題','体':'體','头':'頭','图':'圖','团':'團','为':'為',
+  '问':'問','无':'無','务':'務',
+  // X–Z
+  '显':'顯','现':'現','协':'協','选':'選','学':'學','寻':'尋','压':'壓','阳':'陽',
+  '叶':'葉','义':'義','亿':'億','忆':'憶','应':'應','赢':'贏','营':'營','优':'優',
+  '与':'與','语':'語','远':'遠','愿':'願','运':'運','赞':'讚','凿':'鑿','战':'戰',
+  '这':'這','着':'著','赠':'贈','争':'爭','证':'證','织':'織',
+  '终':'終','众':'眾','专':'專','庄':'莊','总':'總',
+  // Religious / hymn-specific
+  '拣':'揀','颂':'頌','赐':'賜','赎':'贖','献':'獻','赞':'讚','祷':'禱','怜':'憐',
+  '悯':'憫','宽':'寬','饶':'饒','净':'淨','洁':'潔','纯':'純','荣':'榮','圣':'聖',
+  '灵':'靈','归':'歸','义':'義','恒':'恆','爱':'愛','宝':'寶','紧':'緊','华':'華',
+  '亲':'親','辞':'辭','词':'詞','离':'離','谢':'謝','论':'論','单':'單','属':'屬',
+  '举':'舉','读':'讀','见':'見','听':'聽','记':'記','变':'變','极':'極','终':'終',
+  // Additional common characters
+  '与':'與','业':'業','乱':'亂','亿':'億','仓':'倉','协':'協','农':'農','务':'務',
+  '叹':'嘆','帮':'幫','恳':'懇','怀':'懷','肃':'肅','里':'裡','两':'兩','兴':'興',
+  '赛':'賽','谁':'誰','层':'層','维':'維','结':'結','统':'統','练':'練','缘':'緣',
+  '觉':'覺','万':'萬','无':'無','却':'卻','属':'屬','华':'華','宝':'寶','亲':'親',
+  '丰':'豐','满':'滿','净':'淨','洁':'潔','纯':'純','声':'聲','众':'眾','国':'國',
+  '热':'熱','应':'應','间':'間','问':'問','题':'題','谢':'謝','辞':'辭','词':'詞',
+  '离':'離','单':'單','诗':'詩','经':'經','节':'節','礼':'禮','荣':'榮','乡':'鄉',
+  '汉':'漢','欢':'歡','获':'獲','宁':'寧','书':'書','气':'氣','头':'頭','难':'難',
+  '达':'達','联':'聯','获':'獲','个':'個','长':'長','从':'從','开':'開','发':'發',
+  '认':'認','给':'給','让':'讓','带':'帶','记':'記','显':'顯','远':'遠','当':'當',
+  '学':'學','实':'實','称':'稱','传':'傳','灵':'靈','圣':'聖','赞':'讚','颂':'頌',
+  '来':'來','无':'無','须':'須','处':'處','该':'該','举':'舉','顺':'順','紧':'緊',
+  '随':'隨','祷':'禱','导':'導','领':'領','临':'臨','义':'義','极':'極','时':'時',
+  '动':'動','话':'話','说':'說','这':'這','为':'為','关':'關','进':'進','过':'過',
+  '还':'還','现':'現','认':'認','见':'見','听':'聽','变':'變','虽':'雖','却':'卻',
+};
 function s2t(s){ return s ? [...s].map(c=>S2T[c]||c).join('') : s; }
 
 // ──────────────────────────────────────────────────────────────
@@ -424,11 +480,15 @@ function updateDisplay() {
 // ──────────────────────────────────────────────────────────────
 // OPEN HYMN FROM KEYPAD
 // ──────────────────────────────────────────────────────────────
+const DB_FU_OFFSET = 780; // 附1~附6 stored as db781~db786
+
 function openHymnByNum(cat) {
   const n = parseInt(numInput);
   if (!n || n < 1) { alert('請先輸入詩歌編號'); return; }
+  const isFu = hasFu && cat === 'db';
+  if (isFu && (n < 1 || n > 6)) { alert('大本詩歌附詩歌編號為 1 至 6'); return; }
   numInput = ''; hasFu = false; updateDisplay();
-  openHymn(cat, n);
+  openHymn(cat, isFu ? DB_FU_OFFSET + n : n);
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -439,8 +499,10 @@ async function openHymn(cat, num) {
   const catInfo = CATS[cat];
 
   // Update header
+  const isFuHymn = cat === 'db' && num > DB_FU_OFFSET;
+  const displayNum = isFuHymn ? '附 ' + (num - DB_FU_OFFSET) : '第 ' + num;
   document.getElementById('content-cat').textContent = catInfo.label;
-  document.getElementById('content-title').textContent = '第 ' + num + ' 首';
+  document.getElementById('content-title').textContent = displayNum + ' 首';
   document.getElementById('yt-btn').style.display = 'none';
   document.getElementById('lyrics-panel').classList.remove('open');
   document.getElementById('lyrics-toggle').textContent = '▼ 顯示歌詞';
@@ -518,7 +580,9 @@ function showPage(idx) {
     }
   };
   img.onerror = () => {
-    loading.innerHTML = '<div style="text-align:center;color:#90caf9;padding:20px">🎵<br>第 ' + currentNum + ' 首<br><small style="color:#666">樂譜圖片暫無</small></div>';
+    const isFuErr = currentCat === 'db' && currentNum > DB_FU_OFFSET;
+    const displayNumErr = isFuErr ? '附 ' + (currentNum - DB_FU_OFFSET) : '第 ' + currentNum;
+    loading.innerHTML = '<div style="text-align:center;color:#c9a87a;padding:20px">🎵<br>' + displayNumErr + ' 首<br><small style="color:#7a5c3a">樂譜圖片暫無</small></div>';
   };
   img.src = currentPages[idx];
 }
@@ -590,7 +654,11 @@ async function loadLyricsTitle(cat, num) {
     if (txt) {
       const lines = txt.split('\n');
       const title = s2t(lines[1]?.trim() || '');
-      if (title) document.getElementById('content-title').textContent = '第 ' + num + ' 首　' + title;
+      if (title) {
+        const isFuTitle = cat === 'db' && num > DB_FU_OFFSET;
+        const displayTitle = isFuTitle ? '附 ' + (num - DB_FU_OFFSET) : '第 ' + num;
+        document.getElementById('content-title').textContent = displayTitle + ' 首　' + title;
+      }
       document.getElementById('lyrics-content').textContent = s2t(txt);
     }
   } catch(e) {}
@@ -624,7 +692,7 @@ async function switchTocCat(cat) {
   document.getElementById('toc-title').textContent = CATS[cat].label;
 
   if (!tocCache[cat]) {
-    document.getElementById('toc-list').innerHTML = '<div style="padding:20px;text-align:center;color:#90caf9"><div class="spinner" style="margin:auto"></div></div>';
+    document.getElementById('toc-list').innerHTML = '<div style="padding:20px;text-align:center;color:#c9a87a"><div class="spinner" style="margin:auto"></div></div>';
     const txt = await fetch(BASE + 'lyrics_toc/' + CATS[cat].tocFile).then(r=>r.text());
     tocCache[cat] = parseToc(txt);
   }
@@ -648,7 +716,7 @@ function parseToc(txt) {
 
 function renderTocList(hymns) {
   const list = document.getElementById('toc-list');
-  if (!hymns.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:#90caf9">找不到</div>'; return; }
+  if (!hymns.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:#c9a87a">找不到</div>'; return; }
   const frag = document.createDocumentFragment();
   let lastSection = null;
   for (const h of hymns) {
@@ -671,16 +739,84 @@ function filterToc(q) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// SEARCH
+// SEARCH (cross-category)
 // ──────────────────────────────────────────────────────────────
-function doSearch() {
+async function loadLyricsIndex() {
+  if (lyricsIndex) return;
+  const txt = await fetch('lyrics-index.txt').then(r => r.text());
+  lyricsIndex = txt.trim().split('\n').map(line => {
+    const [cat, numStr, title, ...bodyParts] = line.split('|');
+    return { cat, num: parseInt(numStr), title: title || '', body: bodyParts.join('|') || '' };
+  });
+}
+
+function extractSnippet(body, q) {
+  const idx = body.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return '';
+  const start = Math.max(0, idx - 10);
+  const end = Math.min(body.length, idx + q.length + 40);
+  let snippet = body.slice(start, end).replace(/\s+/g, ' ').trim();
+  if (start > 0) snippet = '…' + snippet;
+  if (end < body.length) snippet += '…';
+  return snippet;
+}
+
+async function doSearch() {
   const q = document.getElementById('search-input').value.trim();
   if (!q) return;
-  openToc('db');
-  setTimeout(() => {
-    document.getElementById('toc-search').value = q;
-    filterToc(q);
-  }, 100);
+
+  document.getElementById('toc-overlay').classList.add('open');
+  document.getElementById('toc-title').textContent = '搜尋：' + q;
+  document.getElementById('toc-search').value = '';
+  document.querySelectorAll('.toc-cat-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('toc-list').innerHTML =
+    '<div style="padding:20px;text-align:center;color:var(--accent)"><div class="spinner" style="margin:auto"></div><div style="margin-top:10px;font-size:13px">搜尋歌詞中…</div></div>';
+
+  try {
+    await loadLyricsIndex();
+  } catch(e) {
+    document.getElementById('toc-list').innerHTML =
+      '<div style="padding:24px;text-align:center;color:var(--text2)">無法載入歌詞索引</div>';
+    return;
+  }
+
+  const ql = q.toLowerCase();
+  const titleMatches = [];
+  const bodyMatches = [];
+
+  for (const h of lyricsIndex) {
+    const inTitle = h.title.toLowerCase().includes(ql) || String(h.num) === q;
+    const inBody  = !inTitle && h.body.toLowerCase().includes(ql);
+    if (inTitle) titleMatches.push({ ...h, snippet: '' });
+    else if (inBody) bodyMatches.push({ ...h, snippet: extractSnippet(h.body, q) });
+  }
+
+  const results = [...titleMatches, ...bodyMatches];
+  const list = document.getElementById('toc-list');
+  if (!results.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text2)">找不到「' + q + '」相符的詩歌</div>';
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  for (const h of results) {
+    const item = document.createElement('div');
+    item.className = 'toc-item';
+    const catLabel = CATS[h.cat] ? CATS[h.cat].label : h.cat;
+    const isFu = h.cat === 'db' && h.num > DB_FU_OFFSET;
+    const displayNum = isFu ? '附' + (h.num - DB_FU_OFFSET) : h.num;
+    item.innerHTML =
+      `<div class="toc-num">${displayNum}</div>` +
+      `<div style="flex:1;min-width:0">` +
+        `<div class="toc-name">${h.title}</div>` +
+        `<div style="font-size:11px;color:var(--text3);margin-top:2px">${catLabel}</div>` +
+        (h.snippet ? `<div style="font-size:11px;color:var(--text2);margin-top:3px;white-space:normal;line-height:1.4">${h.snippet}</div>` : '') +
+      `</div>`;
+    item.onclick = () => { closeToc(); openHymn(h.cat, h.num); };
+    frag.appendChild(item);
+  }
+  list.innerHTML = '';
+  list.appendChild(frag);
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -711,7 +847,7 @@ document.getElementById('dismiss-install').addEventListener('click', () => {
 // iOS hint
 if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone && !installDismissed) {
   setTimeout(() => {
-    document.getElementById('install-banner').innerHTML = `<div class="install-text"><strong>加入主畫面</strong>點分享 → 「加入主畫面」即可安裝</div><button id="dismiss-install" style="background:none;border:none;color:#90caf9;font-size:20px;cursor:pointer;margin-left:auto" onclick="localStorage.setItem('installDismissed','1');this.closest('#install-banner').classList.remove('show')">✕</button>`;
+    document.getElementById('install-banner').innerHTML = `<div class="install-text"><strong>加入主畫面</strong>點分享 → 「加入主畫面」即可安裝</div><button id="dismiss-install" style="background:none;border:none;color:#c9a87a;font-size:20px;cursor:pointer;margin-left:auto" onclick="localStorage.setItem('installDismissed','1');this.closest('#install-banner').classList.remove('show')">✕</button>`;
     document.getElementById('install-banner').classList.add('show');
   }, 3000);
 }
