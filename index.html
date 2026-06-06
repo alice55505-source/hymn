@@ -356,7 +356,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
     安裝後可離線使用詩歌本
   </div>
   <button id="install-btn">安裝</button>
-  <button id="dismiss-install">✕</button>
 </div>
 
 <script>
@@ -835,24 +834,29 @@ history.pushState(null, '');
 // ──────────────────────────────────────────────────────────────
 // PWA INSTALL
 // ──────────────────────────────────────────────────────────────
-let installDismissed = localStorage.getItem('installDismissed');
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault(); deferredInstall = e;
-  if (!installDismissed) setTimeout(() => document.getElementById('install-banner').classList.add('show'), 3000);
+  setTimeout(() => document.getElementById('install-banner').classList.add('show'), 2000);
 });
 document.getElementById('install-btn').addEventListener('click', () => {
-  if (deferredInstall) { deferredInstall.prompt(); deferredInstall.userChoice.then(() => { document.getElementById('install-banner').classList.remove('show'); }); }
+  if (deferredInstall) {
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(r => {
+      if (r.outcome === 'accepted') document.getElementById('install-banner').classList.remove('show');
+    });
+  }
 });
-document.getElementById('dismiss-install').addEventListener('click', () => {
-  localStorage.setItem('installDismissed','1'); document.getElementById('install-banner').classList.remove('show');
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('show');
 });
 
-// iOS hint
-if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone && !installDismissed) {
+// iOS hint（Safari 沒有 beforeinstallprompt，需手動引導）
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone) {
   setTimeout(() => {
-    document.getElementById('install-banner').innerHTML = `<div class="install-text"><strong>加入主畫面</strong>點分享 → 「加入主畫面」即可安裝</div><button id="dismiss-install" style="background:none;border:none;color:#c9a87a;font-size:20px;cursor:pointer;margin-left:auto" onclick="localStorage.setItem('installDismissed','1');this.closest('#install-banner').classList.remove('show')">✕</button>`;
+    document.getElementById('install-banner').innerHTML =
+      `<div class="install-text"><strong>加入主畫面</strong>點下方分享 → 「加入主畫面」即可安裝</div>`;
     document.getElementById('install-banner').classList.add('show');
-  }, 3000);
+  }, 2000);
 }
 
 // ──────────────────────────────────────────────────────────────
