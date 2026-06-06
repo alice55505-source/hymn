@@ -2,6 +2,11 @@ name: Build Traditional Chinese APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-tw-apk.yml'
 
 jobs:
   build:
