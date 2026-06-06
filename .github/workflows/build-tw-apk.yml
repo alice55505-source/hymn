@@ -40,7 +40,39 @@ jobs:
 
       - name: Decompile APK
         run: |
-          java -jar apktool.jar d hymnchtv-release.apk -o hymnchtv-decompiled --no-src -f
+          java -jar apktool.jar d hymnchtv-release.apk -o hymnchtv-decompiled -f
+
+      - name: Patch smali to force Traditional Chinese locale
+        run: |
+          # LocaleHelper.smali: change all "zh_CN" defaults to "zh_TW"
+          LOCALE_HELPER=$(find hymnchtv-decompiled -name "LocaleHelper.smali" | head -1)
+          if [ -n "$LOCALE_HELPER" ]; then
+            sed -i 's/"zh_CN"/"zh_TW"/g' "$LOCALE_HELPER"
+            echo "Patched $LOCALE_HELPER"
+            grep -n "zh_" "$LOCALE_HELPER" || true
+          else
+            echo "WARNING: LocaleHelper.smali not found"
+          fi
+
+          # HymnsApp.smali: change SharedPreferences default from zh_CN to zh_TW
+          HYMNS_APP=$(find hymnchtv-decompiled -name "HymnsApp.smali" | head -1)
+          if [ -n "$HYMNS_APP" ]; then
+            sed -i 's/const-string \(.*\), "zh_CN"/const-string \1, "zh_TW"/g' "$HYMNS_APP"
+            echo "Patched $HYMNS_APP"
+            grep -n "zh_" "$HYMNS_APP" || true
+          else
+            echo "WARNING: HymnsApp.smali not found"
+          fi
+
+          # MainActivity.smali: change language picker selection from zh_CN to zh_TW
+          MAIN_ACTIVITY=$(find hymnchtv-decompiled -name "MainActivity.smali" | head -1)
+          if [ -n "$MAIN_ACTIVITY" ]; then
+            sed -i 's/const-string \(.*\), "zh_CN"/const-string \1, "zh_TW"/g' "$MAIN_ACTIVITY"
+            echo "Patched $MAIN_ACTIVITY"
+            grep -n "zh_" "$MAIN_ACTIVITY" | head -20 || true
+          else
+            echo "WARNING: MainActivity.smali not found"
+          fi
 
       - name: Convert strings to Traditional Chinese
         run: |
@@ -191,15 +223,33 @@ jobs:
               f.write(result)
           print(f"Wrote {dst}")
 
-          # Also overwrite values/strings.xml in-place so the in-app language
-          # picker ("中文(简体)") also shows Traditional Chinese
-          tw_result = result
           # Rename the language option label from 简体 to 繁體
-          tw_result = tw_result.replace('中文(简体)', '中文(繁體)')
-          tw_result = tw_result.replace('中文（简体）', '中文（繁體）')
+          result = result.replace('中文(简体)', '中文(繁體)')
+          result = result.replace('中文（简体）', '中文（繁體）')
+
+          # Also overwrite values/strings.xml so fallback locale gets Traditional Chinese
           with open(src, 'w', encoding='utf-8') as f:
-              f.write(tw_result)
+              f.write(result)
           print(f"Updated {src} with Traditional Chinese")
+
+          # Overwrite values-zh-rCN/strings.xml so zh_TW fallback chain also has TW strings
+          cn_dir = 'hymnchtv-decompiled/res/values-zh-rCN'
+          if os.path.isdir(cn_dir):
+              cn_src = os.path.join(cn_dir, 'strings.xml')
+              if os.path.exists(cn_src):
+                  with open(cn_src, encoding='utf-8') as f:
+                      cn_content = f.read()
+                  cn_result = re.sub(
+                      r'(<string[^>]*>)(.*?)(</string>)',
+                      convert_value,
+                      cn_content,
+                      flags=re.DOTALL
+                  )
+                  cn_result = cn_result.replace('中文(简体)', '中文(繁體)')
+                  cn_result = cn_result.replace('中文（简体）', '中文（繁體）')
+                  with open(cn_src, 'w', encoding='utf-8') as f:
+                      f.write(cn_result)
+                  print(f"Updated {cn_src} with Traditional Chinese")
 
           PYEOF
 
@@ -237,7 +287,7 @@ jobs:
           # Create release if it doesn't exist yet (ignore error if already exists)
           gh release create "$TAG" \
             --title "HymnchtTV 繁體中文介面版" \
-            --notes "基於 HymnchtTV v2.8.2，將 App 界面文字轉換為繁體中文（台灣）。安裝後請將手機語言設定為「中文（繁體、台灣）」。" \
+            --notes "基於 HymnchtTV 最新版，已直接將 App 界面強制設定為繁體中文，無需手動調整語言設定。安裝後直接使用即可。" \
             --repo alice55505-source/hymn 2>/dev/null || true
           # Upload (overwrite if already exists)
           gh release upload "$TAG" hymnchtv-tw.apk --clobber \
