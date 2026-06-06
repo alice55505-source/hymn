@@ -287,6 +287,63 @@ jobs:
           print(f"Converted {total} lyrics files to Traditional Chinese")
           PYEOF
 
+      - name: Patch app icon (书→書)
+        run: |
+          sudo apt-get install -y fonts-noto-cjk -q 2>/dev/null || true
+          pip install Pillow -q
+          python3 << 'PYEOF'
+          from PIL import Image, ImageDraw, ImageFont
+          import os
+
+          FONT = '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'
+
+          # Reference bounding boxes measured from 512x512 (xxhdpi) icon
+          # char 1 = 书 at (317,87)-(378,152)
+          REF_SIZE = 512
+          REF_BOX = (317, 87, 378, 152)   # x0,y0,x1,y1
+
+          ICON_PATHS = [
+              'hymnchtv-decompiled/res/drawable-mdpi/hymnchtv.png',
+              'hymnchtv-decompiled/res/drawable-hdpi/hymnchtv.png',
+              'hymnchtv-decompiled/res/drawable-xhdpi/hymnchtv.png',
+              'hymnchtv-decompiled/res/drawable-xxhdpi/hymnchtv.png',
+          ]
+
+          for path in ICON_PATHS:
+              if not os.path.exists(path):
+                  print(f"Missing: {path}")
+                  continue
+              img = Image.open(path).convert('RGBA')
+              W, H = img.size
+              scale = W / REF_SIZE
+
+              x0 = int(REF_BOX[0] * scale)
+              y0 = int(REF_BOX[1] * scale)
+              x1 = int(REF_BOX[2] * scale)
+              y1 = int(REF_BOX[3] * scale)
+              bw, bh = x1 - x0, y1 - y0
+
+              # Sample background color from just outside the character box
+              bg_pixel = img.getpixel((x0 + bw // 2, max(0, y0 - 5)))
+              # Fallback to known navy if sampling fails
+              if bg_pixel[0] > 100:
+                  bg_pixel = (23, 52, 75, 255)
+
+              draw = ImageDraw.Draw(img)
+              draw.rectangle([x0 - 2, y0 - 2, x1 + 2, y1 + 2], fill=bg_pixel)
+
+              font = ImageFont.truetype(FONT, bh)
+              bbox = font.getbbox('書')
+              tw = bbox[2] - bbox[0]
+              th = bbox[3] - bbox[1]
+              tx = x0 + (bw - tw) // 2 - bbox[0]
+              ty = y0 + (bh - th) // 2 - bbox[1]
+              draw.text((tx, ty), '書', font=font, fill=(255, 255, 255, 255))
+
+              img.save(path)
+              print(f"Patched {path} ({W}x{H})")
+          PYEOF
+
       - name: Recompile APK
         run: |
           java -jar apktool.jar b hymnchtv-decompiled -o hymnchtv-tw-unsigned.apk
