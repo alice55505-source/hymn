@@ -23,13 +23,20 @@ jobs:
 
       - name: Download apktool
         run: |
-          curl -L -o apktool.jar \
+          curl -fL -o apktool.jar \
             "https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar"
+          ls -lh apktool.jar
 
       - name: Download HymnchtTV APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          curl -L -o hymnchtv-release.apk \
-            "https://github.com/cmeng-git/hymnchtv/releases/download/v2.8.2/hymnchtv-release.apk"
+          APK_URL=$(gh api repos/cmeng-git/hymnchtv/releases/latest \
+            --jq '.assets[] | select(.name | endswith(".apk")) | .browser_download_url' \
+            | head -1)
+          echo "Downloading: $APK_URL"
+          curl -fL -o hymnchtv-release.apk "$APK_URL"
+          ls -lh hymnchtv-release.apk
 
       - name: Decompile APK
         run: |
