@@ -243,14 +243,13 @@ jobs:
       - name: Create or update GitHub Release
         run: |
           TAG="tw-latest"
-          # Delete existing release if present
-          gh release delete "$TAG" --yes 2>/dev/null || true
-          git tag -d "$TAG" 2>/dev/null || true
-          git push origin ":refs/tags/$TAG" 2>/dev/null || true
-          # Create new release with the APK
-          gh release create "$TAG" hymnchtv-tw.apk \
+          # Create release if it doesn't exist yet (ignore error if already exists)
+          gh release create "$TAG" \
             --title "HymnchtTV 繁體中文介面版" \
             --notes "基於 HymnchtTV v2.8.2，將 App 界面文字轉換為繁體中文（台灣）。安裝後請將手機語言設定為「中文（繁體、台灣）」。" \
+            --repo alice55505-source/hymn 2>/dev/null || true
+          # Upload (overwrite if already exists)
+          gh release upload "$TAG" hymnchtv-tw.apk --clobber \
             --repo alice55505-source/hymn
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
