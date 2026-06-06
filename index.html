@@ -88,7 +88,6 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 .cat-xg  { background: #2e7d32; }
 .cat-xb  { background: #6a1b9a; }
 .cat-er  { background: #e65100; }
-.cat-yb  { background: #00695c; }
 
 /* ── CONTENT VIEW (score viewer) ── */
 #content-view {
@@ -248,7 +247,7 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 
 <!-- MAIN SCREEN -->
 <div id="main-screen">
-  <div id="hint">按目錄選項，或輸入（附）編號後按大本、補充、新詩、新頌、兒詩或英文</div>
+  <div id="hint">按目錄選項，或輸入（附）編號後按大本、補充、新詩、新頌或兒詩</div>
 
   <div id="num-display" class="empty">輸入詩歌編號 ↓</div>
 
@@ -285,7 +284,6 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
       <button class="cat-btn cat-er" onclick="openHymnByNum('er')">兒詩</button>
       <button class="cat-btn cat-xb" onclick="openHymnByNum('xb')">新頌</button>
       <button class="cat-btn cat-xg" onclick="openHymnByNum('xg')">新詩</button>
-      <button class="cat-btn cat-yb" onclick="openHymnByNum('yb')">英文</button>
       <button class="cat-btn cat-bb" onclick="openHymnByNum('bb')">補充</button>
       <button class="cat-btn cat-db" onclick="openHymnByNum('db')">大本</button>
     </div>
@@ -333,7 +331,6 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
       <button class="toc-cat-btn cat-xg" data-cat="xg" onclick="switchTocCat('xg')">新詩</button>
       <button class="toc-cat-btn cat-xb" data-cat="xb" onclick="switchTocCat('xb')">新頌</button>
       <button class="toc-cat-btn cat-er" data-cat="er" onclick="switchTocCat('er')">兒詩</button>
-      <button class="toc-cat-btn cat-yb" data-cat="yb" onclick="switchTocCat('yb')">英文</button>
     </div>
     <input id="toc-search" placeholder="搜尋詩歌名稱或編號…" oninput="filterToc(this.value)">
     <div id="toc-list"></div>
@@ -362,11 +359,11 @@ const CATS = {
   xg: { label: '新詩',     score: 'lyrics_xg_score', text: 'lyrics_xg_text', prefix: 'xg', tocFile: 'toc_xg_eng2ch.txt' },
   xb: { label: '新頌',     score: 'lyrics_xb_score', text: 'lyrics_xb_text', prefix: 'xb', tocFile: 'toc_xb_pinyin.txt' },
   er: { label: '兒詩',     score: 'lyrics_er_score', text: 'lyrics_er_text', prefix: 'er', tocFile: 'toc_er_stroke.txt' },
-  yb: { label: '英文',     score: 'lyrics_yb_score', text: 'lyrics_yb_text', prefix: 'yb', tocFile: 'toc_yb_toc.txt' },
 };
 
 // er score uses NO prefix (just "1.png", not "er1.png")
 const SCORE_NOPREFIX = { er: true };
+
 
 // ──────────────────────────────────────────────────────────────
 // STATE
