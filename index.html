@@ -264,7 +264,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   <div id="num-display" class="empty">輸入詩歌編號 ↓</div>
 
   <div id="search-row">
-    <input id="search-input" placeholder="歌詞搜尋…" type="search" autocomplete="off">
+    <input id="search-input" placeholder="搜尋詩歌名稱…" type="search" autocomplete="off" onkeydown="if(event.key==='Enter')doSearch()">
     <button id="search-btn" onclick="doSearch()">搜尋</button>
     <button id="toc-btn" onclick="openToc('db')">目錄</button>
   </div>
@@ -738,16 +738,62 @@ function filterToc(q) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// SEARCH
+// SEARCH (cross-category)
 // ──────────────────────────────────────────────────────────────
-function doSearch() {
+async function doSearch() {
   const q = document.getElementById('search-input').value.trim();
   if (!q) return;
-  openToc('db');
-  setTimeout(() => {
-    document.getElementById('toc-search').value = q;
-    filterToc(q);
-  }, 100);
+
+  // Open TOC overlay in search mode
+  document.getElementById('toc-overlay').classList.add('open');
+  document.getElementById('toc-title').textContent = '搜尋：' + q;
+  document.getElementById('toc-search').value = '';
+  document.querySelectorAll('.toc-cat-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('toc-list').innerHTML =
+    '<div style="padding:20px;text-align:center;color:var(--accent)"><div class="spinner" style="margin:auto"></div><div style="margin-top:10px;font-size:13px">載入各類別目錄中…</div></div>';
+
+  // Load all TOC caches in parallel
+  await Promise.all(Object.keys(CATS).map(async cat => {
+    if (!tocCache[cat]) {
+      try {
+        const txt = await fetch(BASE + 'lyrics_toc/' + CATS[cat].tocFile).then(r => r.text());
+        tocCache[cat] = parseToc(txt);
+      } catch(e) { tocCache[cat] = []; }
+    }
+  }));
+
+  // Search across all categories
+  const ql = q.toLowerCase();
+  const results = [];
+  for (const cat of Object.keys(CATS)) {
+    for (const h of (tocCache[cat] || [])) {
+      if (h.title.toLowerCase().includes(ql) || String(h.num).includes(ql)) {
+        results.push({ ...h, cat });
+      }
+    }
+  }
+
+  // Render results
+  const list = document.getElementById('toc-list');
+  if (!results.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text2)">找不到「' + q + '」相符的詩歌</div>';
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  for (const h of results) {
+    const item = document.createElement('div');
+    item.className = 'toc-item';
+    item.innerHTML =
+      `<div class="toc-num">${h.num}</div>` +
+      `<div style="flex:1">` +
+        `<div class="toc-name">${h.title}</div>` +
+        `<div style="font-size:11px;color:var(--text3);margin-top:2px">${CATS[h.cat].label}</div>` +
+      `</div>`;
+    item.onclick = () => { closeToc(); openHymn(h.cat, h.num); };
+    frag.appendChild(item);
+  }
+  list.innerHTML = '';
+  list.appendChild(frag);
 }
 
 // ──────────────────────────────────────────────────────────────
