@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="詩歌本">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>詩歌本 HymnCH</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --bg2: #1a1a2e;
+    --bg3: #232340;
+    --accent: #4a90d9;
+    --accent2: #6ab0ff;
+    --text: #e8e8f0;
+    --text2: #a0a0c0;
+    --text3: #6060a0;
+    --border: #2a2a4a;
+    --tab-h: 56px;
+    --header-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
+
+  /* ── HEADER ── */
+  #header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--header-h);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; padding: 0 12px;
+  }
+  #header h1 { font-size: 18px; font-weight: 700; color: var(--accent2); white-space: nowrap; }
+  #search-wrap { flex: 1; position: relative; }
+  #search-input {
+    width: 100%; height: 36px; padding: 0 12px 0 34px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 18px;
+    color: var(--text); font-size: 14px; outline: none;
+  }
+  #search-input::placeholder { color: var(--text3); }
+  #search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+  #clear-btn {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--text2); cursor: pointer;
+    font-size: 16px; padding: 2px 4px; display: none;
+  }
+
+  /* ── TABS ── */
+  #tabs {
+    position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 99;
+    height: var(--tab-h);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+  }
+  .tab-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: none; border: none; color: var(--text2); cursor: pointer;
+    font-size: 12px; gap: 2px; transition: color 0.2s;
+    position: relative;
+  }
+  .tab-btn .tab-icon { font-size: 18px; }
+  .tab-btn.active { color: var(--accent2); }
+  .tab-btn.active::after {
+    content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 2px;
+    background: var(--accent); border-radius: 2px;
+  }
+
+  /* ── MAIN CONTENT ── */
+  #main {
+    position: fixed; top: calc(var(--header-h) + var(--tab-h)); bottom: 0; left: 0; right: 0;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── HYMN LIST ── */
+  .hymn-list { padding: 0; }
+  .section-header {
+    padding: 8px 16px 4px;
+    font-size: 11px; font-weight: 600;
+    color: var(--text3); letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .hymn-item {
+    display: flex; align-items: center; padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s;
+    gap: 12px;
+  }
+  .hymn-item:active { background: var(--bg3); }
+  .hymn-num {
+    min-width: 44px; height: 36px;
+    background: var(--bg3); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--accent);
+  }
+  .hymn-title { font-size: 15px; color: var(--text); line-height: 1.3; }
+  .hymn-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .hymn-arrow { margin-left: auto; color: var(--text3); font-size: 14px; }
+
+  /* ── DETAIL VIEW ── */
+  #detail {
+    position: fixed; top: 0; bottom: 0; left: 0; right: 0; z-index: 200;
+    background: var(--bg);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex; flex-direction: column;
+  }
+  #detail.open { transform: translateX(0); }
+  #detail-header {
+    height: var(--header-h);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; padding: 0 12px;
+    flex-shrink: 0;
+  }
+  #back-btn {
+    background: none; border: none; color: var(--accent2); cursor: pointer;
+    font-size: 24px; padding: 4px 8px 4px 0;
+    display: flex; align-items: center; gap: 4px;
+  }
+  #back-btn span { font-size: 16px; }
+  #detail-title { flex: 1; font-size: 16px; font-weight: 600; color: var(--text); }
+  #yt-btn {
+    background: #cc0000; color: #fff; border: none; border-radius: 8px;
+    padding: 6px 12px; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  #yt-btn:hover { background: #e00; }
+  #yt-btn.hidden { display: none; }
+  #detail-scroll {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 16px;
+  }
+  #detail-num { font-size: 13px; color: var(--text3); margin-bottom: 4px; }
+  #detail-hymn-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  #detail-notation { font-size: 13px; color: var(--accent); margin-bottom: 20px; }
+  #detail-lyrics { font-size: 16px; line-height: 2; color: var(--text); white-space: pre-wrap; }
+  .verse-label { font-weight: 700; color: var(--accent2); display: block; margin-top: 16px; margin-bottom: 4px; }
+  #detail-loading { text-align: center; padding: 40px; color: var(--text2); }
+
+  /* ── LOADING SPINNER ── */
+  .spinner {
+    display: inline-block; width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── INSTALL BANNER ── */
+  #install-banner {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+    background: var(--bg2); border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    transform: translateY(100%);
+    transition: transform 0.4s ease;
+  }
+  #install-banner.show { transform: translateY(0); }
+  .install-icon { font-size: 28px; }
+  .install-text h3 { font-size: 15px; color: var(--text); }
+  .install-text p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  #install-btn {
+    margin-left: auto; background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; white-space: nowrap;
+  }
+  #dismiss-btn {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 20px; padding: 4px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── FONT SIZE CONTROLS ── */
+  #font-btns { display: flex; gap: 4px; margin-left: auto; }
+  .font-btn {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+    border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>📖 詩歌本</h1>
+  <div id="search-wrap">
+    <span id="search-icon">🔍</span>
+    <input id="search-input" type="search" placeholder="搜尋詩歌名稱或編號…" autocomplete="off">
+    <button id="clear-btn">✕</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div id="tabs">
+  <button class="tab-btn active" data-cat="db">
+    <span class="tab-icon">📕</span>
+    <span>大本詩歌</span>
+  </button>
+  <button class="tab-btn" data-cat="bb">
+    <span class="tab-icon">📗</span>
+    <span>補充本</span>
+  </button>
+  <button class="tab-btn" data-cat="xg">
+    <span class="tab-icon">🎵</span>
+    <span>新歌頌咏</span>
+  </button>
+  <button class="tab-btn" data-cat="er">
+    <span class="tab-icon">👦</span>
+    <span>兒童詩歌</span>
+  </button>
+</div>
+
+<!-- MAIN LIST -->
+<div id="main">
+  <div id="list-container" class="hymn-list">
+    <div class="empty-state">
+      <div class="icon"><div class="spinner"></div></div>
+      <p>載入詩歌目錄中…</p>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL VIEW -->
+<div id="detail">
+  <div id="detail-header">
+    <button id="back-btn">‹ <span>返回</span></button>
+    <div id="detail-title"></div>
+    <button id="yt-btn" class="hidden">▶ 影音</button>
+  </div>
+  <div id="detail-scroll">
+    <div id="detail-loading"></div>
+  </div>
+</div>
+
+<!-- PWA INSTALL BANNER -->
+<div id="install-banner">
+  <div class="install-icon">📲</div>
+  <div class="install-text">
+    <h3>加入主畫面</h3>
+    <p>安裝後可離線使用詩歌本</p>
+  </div>
+  <button id="install-btn">安裝</button>
+  <button id="dismiss-btn">✕</button>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────────
+// CONFIG
+// ──────────────────────────────────────────────────────────────────────
+const BASE = 'https://raw.githubusercontent.com/cmeng-git/hymnchtv/master/hymnchtv/src/main/assets/';
+const TOC_BASE = BASE + 'lyrics_toc/';
+const CATS = {
+  db: { label: '大本詩歌', toc: 'toc_db_eng2ch.txt', prefix: 'db', hymn_key: 'hymn_db' },
+  bb: { label: '補充本',   toc: 'toc_bb_eng2ch.txt', prefix: 'bb', hymn_key: 'hymn_bb' },
+  xg: { label: '新歌頌咏', toc: 'toc_xg_eng2ch.txt', prefix: 'xg', hymn_key: 'hymn_xg' },
+  er: { label: '兒童詩歌', toc: 'toc_er_stroke.txt',  prefix: 'er', hymn_key: 'hymn_er' },
+};
+
+// State
+let currentCat = 'db';
+let currentHymns = [];  // [{num, title, section}]
+let mediaMap = {};      // {hymn_key_num: {yt, notion}}
+let tocCache = {};      // cat -> hymns array
+let fontBase = 16;
+let deferredInstall = null;
+
+// ──────────────────────────────────────────────────────────────────────
+// SIMPLIFIED → TRADITIONAL CONVERTER (lightweight mapping)
+// ──────────────────────────────────────────────────────────────────────
+const S2T_MAP = {
+  '爱':'愛','来':'來','问':'問','题':'題','时':'時','动':'動','话':'話','说':'說','这':'這','个':'個',
+  '们':'們','为':'為','关':'關','长':'長','进':'進','过':'過','还':'還','从':'從','发':'發','开':'開',
+  '对':'對','现':'現','认':'認','创':'創','给':'給','让':'讓','带':'帶','记':'記','见':'見','听':'聽',
+  '单':'單','们':'們','变':'變','显':'顯','许':'許','远':'遠','当':'當','学':'學','实':'實','称':'稱',
+  '传':'傳','归':'歸','灵':'靈','圣':'聖','赞':'讚','颂':'頌','诗':'詩','歌':'歌','经':'經','神':'神',
+  '节':'節','礼':'禮','拜':'拜','爱':'愛','荣':'榮','耀':'耀','恩':'恩','福':'福','主':'主','耶':'耶',
+  '稣':'穌','基':'基','督':'督','天':'天','地':'地','心':'心','身':'身','手':'手','口':'口','眼':'眼',
+  '我':'我','你':'你','他':'他','她':'她','们':'們','我们':'我們','你们':'你們','他们':'他們',
+  '举':'舉','称':'稱','荣':'榮','华':'華','宝':'寶','贝':'貝','亲':'親','爱':'愛','恩':'恩',
+  '顺':'順','从':'從','服':'服','从':'從','紧':'緊','随':'隨','跟':'跟','着':'著','赞':'讚',
+  '祷':'禱','告':'告','祈':'祈','求':'求','仰':'仰','望':'望','倚':'倚','靠':'靠','信':'信',
+  '靠':'靠','仰':'仰','奉':'奉','献':'獻','祭':'祭','事':'事','奉':'奉','侍':'侍','倡':'倡',
+  '导':'導','领':'領','众':'眾','聚':'聚','集':'集','建':'建','立':'立','国':'國','度':'度',
+  '弟':'弟','兄':'兄','姐':'姐','妹':'妹','众':'眾','圣':'聖','徒':'徒','门':'門','生':'生',
+  '复':'復','活':'活','升':'升','天':'天','再':'再','临':'臨','荣':'榮','耀':'耀',
+  '颂':'頌','赞':'讚','美':'美','称':'稱','谢':'謝','感':'感','恩':'恩','父':'父',
+  '子':'子','灵':'靈','三':'三','一':'一','独':'獨','生':'生','爱':'愛','子':'子',
+  // Common characters in hymns
+  '热':'熱','应':'應','义':'義','终':'終','极':'極','无':'無','间':'間','难':'難',
+  '虽':'雖','已':'已','却':'卻','须':'須','处':'處','该':'該','属':'屬','丰':'豐',
+  '满':'滿','喜':'喜','乐':'樂','快':'快','安':'安','慰':'慰','怜':'憐','悯':'憫',
+  '宽':'寬','恕':'恕','饶':'饒','浸':'浸','没':'沒','洗':'洗','净':'淨','洁':'潔',
+  '纯':'純','洁':'潔','白':'白','雪':'雪','扬':'揚','奏':'奏','乐':'樂','声':'聲',
+  '充':'充','满':'滿','遍':'遍','满':'滿','宇':'宇','宙':'宙','万':'萬','古':'古',
+  '今':'今','后':'後','未':'未','来':'來','永':'永','远':'遠','久':'久','长':'長',
+};
+
+function s2t(text) {
+  if (!text) return text;
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    result += S2T_MAP[text[i]] || text[i];
+  }
+  return result;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// PARSE TOC
+// ──────────────────────────────────────────────────────────────────────
+function parseToc(text) {
+  const hymns = [];
+  let section = '';
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith('^')) {
+      // ^ 0001: 他的计划 #1  OR  ^ 一个两个三个孩童 #404
+      const m = trimmed.match(/\^\s+(.+?)\s+#(\d+)/);
+      if (m) {
+        hymns.push({ num: parseInt(m[2]), title: s2t(m[1].replace(/\d{4}:\s*/, '').trim()), section });
+      }
+    } else if (!trimmed.startsWith('#') && trimmed.length > 0) {
+      section = s2t(trimmed);
+    }
+  }
+  return hymns;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// PARSE URL_IMPORT (media links)
+// ──────────────────────────────────────────────────────────────────────
+async function loadMediaMap() {
+  if (Object.keys(mediaMap).length > 0) return;
+  try {
+    const text = await fetch(BASE + 'url_import.txt').then(r => r.text());
+    for (const line of text.split('\n')) {
+      const parts = line.trim().split(',');
+      if (parts.length < 5) continue;
+      const [hkey, numStr, , type, url] = parts;
+      const key = `${hkey}|${numStr}`;
+      if (!mediaMap[key]) mediaMap[key] = {};
+      if (type === 'HYMN_MEDIA') mediaMap[key].yt = url;
+      if (type === 'HYMN_JIAOCHANG') mediaMap[key].notion = url;
+    }
+  } catch (e) {
+    console.warn('Could not load media map', e);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// LOAD TOC FOR CATEGORY
+// ──────────────────────────────────────────────────────────────────────
+async function loadCatToc(cat) {
+  if (tocCache[cat]) return tocCache[cat];
+  const catInfo = CATS[cat];
+  const text = await fetch(TOC_BASE + catInfo.toc).then(r => r.text());
+  const hymns = parseToc(text);
+  tocCache[cat] = hymns;
+  return hymns;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// RENDER HYMN LIST
+// ──────────────────────────────────────────────────────────────────────
+function renderList(hymns) {
+  const container = document.getElementById('list-container');
+  if (!hymns || hymns.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>找不到符合的詩歌</p></div>';
+    return;
+  }
+
+  // Group by section
+  const groups = [];
+  let lastSection = null;
+  for (const h of hymns) {
+    if (h.section !== lastSection) {
+      groups.push({ type: 'section', label: h.section || '' });
+      lastSection = h.section;
+    }
+    groups.push({ type: 'hymn', ...h });
+  }
+
+  const frag = document.createDocumentFragment();
+  for (const item of groups) {
+    if (item.type === 'section' && item.label) {
+      const el = document.createElement('div');
+      el.className = 'section-header';
+      el.textContent = item.label;
+      frag.appendChild(el);
+    } else if (item.type === 'hymn') {
+      const el = document.createElement('div');
+      el.className = 'hymn-item';
+      el.innerHTML = `
+        <div class="hymn-num">${item.num}</div>
+        <div>
+          <div class="hymn-title">${item.title}</div>
+        </div>
+        <div class="hymn-arrow">›</div>
+      `;
+      el.addEventListener('click', () => openHymn(item.num, item.title));
+      frag.appendChild(el);
+    }
+  }
+  container.innerHTML = '';
+  container.appendChild(frag);
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// PARSE LYRICS FILE
+// ──────────────────────────────────────────────────────────────────────
+function parseLyrics(raw) {
+  const lines = raw.split('\n').map(l => l.trimEnd());
+  let idx = 0;
+  // Line 0: number; Line 1: title; Line 2: notation
+  const num = lines[0]?.trim() || '';
+  const title = s2t(lines[1]?.trim() || '');
+  const notation = lines[2]?.trim() || '';
+  idx = 3;
+  // Skip blank lines before verses
+  while (idx < lines.length && !lines[idx].trim()) idx++;
+
+  // Collect verses
+  const verses = [];
+  let current = { label: '', lines: [] };
+  for (; idx < lines.length; idx++) {
+    const line = lines[idx];
+    if (!line.trim()) {
+      if (current.lines.length > 0) {
+        verses.push(current);
+        current = { label: '', lines: [] };
+      }
+      continue;
+    }
+    // Verse labels: 一 二 三 四 五 六 七 八 or CHORUS 副歌 合唱
+    if (/^[一二三四五六七八九十副合]$/.test(line.trim()) || line.trim() === '副歌' || line.trim() === '合唱') {
+      if (current.lines.length > 0) {
+        verses.push(current);
+        current = { label: '', lines: [] };
+      }
+      current.label = line.trim();
+    } else {
+      current.lines.push(s2t(line));
+    }
+  }
+  if (current.lines.length > 0) verses.push(current);
+
+  return { num, title, notation, verses };
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// OPEN HYMN DETAIL
+// ──────────────────────────────────────────────────────────────────────
+async function openHymn(num, title) {
+  const detail = document.getElementById('detail');
+  const dtitle = document.getElementById('detail-title');
+  const dloading = document.getElementById('detail-loading');
+  const ytBtn = document.getElementById('yt-btn');
+
+  dtitle.textContent = title;
+  dloading.innerHTML = '<div class="spinner"></div>';
+  ytBtn.classList.add('hidden');
+  detail.classList.add('open');
+
+  // Check for YouTube link
+  const catInfo = CATS[currentCat];
+  const mediaKey = `${catInfo.hymn_key}|${num}`;
+  await loadMediaMap();
+  const media = mediaMap[mediaKey];
+  if (media && media.yt) {
+    ytBtn.classList.remove('hidden');
+    ytBtn.onclick = () => window.open(media.yt, '_blank');
+  }
+
+  // Load lyrics
+  try {
+    const url = `${BASE}lyrics_${currentCat}_text/${catInfo.prefix}${num}.txt`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('not found');
+    const raw = await resp.text();
+    const parsed = parseLyrics(raw);
+    renderLyrics(parsed, num);
+  } catch (e) {
+    dloading.innerHTML = `
+      <div style="text-align:center;padding:40px;color:var(--text2)">
+        <div style="font-size:36px">🎵</div>
+        <p style="margin-top:12px">詩歌 #${num}</p>
+        <p style="margin-top:8px;font-size:13px;color:var(--text3)">歌詞尚未提供</p>
+        ${media && media.notion ? `<br><a href="${media.notion}" target="_blank" style="color:var(--accent2)">查看詳情 →</a>` : ''}
+      </div>
+    `;
+  }
+}
+
+function renderLyrics(parsed, num) {
+  const dloading = document.getElementById('detail-loading');
+  let html = `
+    <div id="detail-num" style="font-size:13px;color:var(--text3);margin-bottom:4px">第 ${num} 首</div>
+    <div id="detail-hymn-title" style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px">${parsed.title}</div>
+  `;
+  if (parsed.notation) {
+    html += `<div id="detail-notation" style="font-size:13px;color:var(--accent);margin-bottom:20px">${parsed.notation}</div>`;
+  }
+  html += '<div id="detail-lyrics" style="font-size:' + fontBase + 'px;line-height:1.9;color:var(--text)">';
+  for (const verse of parsed.verses) {
+    if (verse.label) {
+      html += `<div style="font-weight:700;color:var(--accent2);margin-top:20px;margin-bottom:6px">${verse.label}</div>`;
+    }
+    for (const line of verse.lines) {
+      html += `<div>${line || '&nbsp;'}</div>`;
+    }
+  }
+  html += '</div>';
+  dloading.innerHTML = html;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// SEARCH
+// ──────────────────────────────────────────────────────────────────────
+let searchDebounce = null;
+function doSearch(q) {
+  q = q.trim().toLowerCase();
+  if (!q) {
+    renderList(currentHymns);
+    return;
+  }
+  const results = currentHymns.filter(h =>
+    h.title.toLowerCase().includes(q) ||
+    String(h.num).includes(q)
+  );
+  renderList(results.map(h => ({ ...h, section: '' })));
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// CATEGORY SWITCHING
+// ──────────────────────────────────────────────────────────────────────
+async function switchCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  document.getElementById('search-input').value = '';
+  document.getElementById('clear-btn').style.display = 'none';
+  document.getElementById('list-container').innerHTML =
+    '<div class="empty-state"><div class="icon"><div class="spinner"></div></div><p>載入中…</p></div>';
+
+  const hymns = await loadCatToc(cat);
+  currentHymns = hymns;
+  renderList(hymns);
+  document.getElementById('main').scrollTop = 0;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// EVENTS
+// ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchCat(btn.dataset.cat));
+});
+
+document.getElementById('back-btn').addEventListener('click', () => {
+  document.getElementById('detail').classList.remove('open');
+});
+
+const searchInput = document.getElementById('search-input');
+const clearBtn = document.getElementById('clear-btn');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value;
+  clearBtn.style.display = q ? 'block' : 'none';
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => doSearch(q), 200);
+});
+clearBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  clearBtn.style.display = 'none';
+  renderList(currentHymns);
+});
+
+// Back gesture / button
+window.addEventListener('popstate', () => {
+  const detail = document.getElementById('detail');
+  if (detail.classList.contains('open')) {
+    detail.classList.remove('open');
+    history.pushState(null, '');
+  }
+});
+document.getElementById('detail').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// Push history state when opening detail
+const origOpenHymn = openHymn;
+window.openHymn = async function(num, title) {
+  history.pushState({ hymn: num }, '');
+  await origOpenHymn(num, title);
+};
+
+// ──────────────────────────────────────────────────────────────────────
+// PWA INSTALL
+// ──────────────────────────────────────────────────────────────────────
+let installDismissed = localStorage.getItem('installDismissed');
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  if (!installDismissed) {
+    setTimeout(() => document.getElementById('install-banner').classList.add('show'), 2000);
+  }
+});
+document.getElementById('install-btn').addEventListener('click', () => {
+  if (deferredInstall) {
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(() => {
+      document.getElementById('install-banner').classList.remove('show');
+      deferredInstall = null;
+    });
+  }
+});
+document.getElementById('dismiss-btn').addEventListener('click', () => {
+  localStorage.setItem('installDismissed', '1');
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// iOS Safari install hint
+function isIos() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+}
+function isInStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+}
+if (isIos() && !isInStandaloneMode() && !installDismissed) {
+  setTimeout(() => {
+    document.getElementById('install-banner').innerHTML = `
+      <div class="install-icon">📲</div>
+      <div class="install-text">
+        <h3>加入主畫面</h3>
+        <p>點 <strong>分享</strong> 再選「加入主畫面」即可安裝</p>
+      </div>
+      <button id="dismiss-btn" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;padding:4px;margin-left:auto">✕</button>
+    `;
+    document.getElementById('install-banner').classList.add('show');
+    document.getElementById('dismiss-btn').addEventListener('click', () => {
+      localStorage.setItem('installDismissed', '1');
+      document.getElementById('install-banner').classList.remove('show');
+    });
+  }, 2000);
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// SERVICE WORKER
+// ──────────────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(console.warn);
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────────────────
+history.pushState(null, '');
+switchCat('db');
+loadMediaMap(); // pre-load in background
+</script>
+</body>
+</html>

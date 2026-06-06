@@ -1,0 +1,25 @@
+{
+  "name": "詩歌本 HymnCH",
+  "short_name": "詩歌本",
+  "description": "繁體中文詩歌本 PWA - 大本詩歌、補充本、新歌頌咏、兒童詩歌",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#4a90d9",
+  "orientation": "portrait-primary",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
