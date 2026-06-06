@@ -11,9 +11,19 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>詩歌本</title>
 <style>
+:root {
+  --bg:        #2a1c11;   /* 深焙咖啡 */
+  --surface:   #3d2a1a;   /* 奶茶底色 */
+  --surface2:  #4f3620;   /* 淺一層暖棕 */
+  --accent:    #c9a87a;   /* 焦糖金 */
+  --accent2:   #a07850;   /* 深一點焦糖 */
+  --text:      #f0e6d3;   /* 象牙白 */
+  --text2:     #b89870;   /* 奶茶色 */
+  --text3:     #7a5c3a;   /* 深茶色（次要） */
+}
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
-html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
-  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
+  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', 'Georgia', serif; }
 
 /* ── MAIN SCREEN ── */
 #main-screen {
@@ -23,17 +33,17 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 
 /* hint */
 #hint {
-  text-align: center; font-size: 12px; color: #90caf9;
+  text-align: center; font-size: 12px; color: var(--text3);
   padding: 4px 0; line-height: 1.4;
 }
 
 /* number display */
 #num-display {
   text-align: center; font-size: 48px; font-weight: bold;
-  color: #fff; min-height: 60px; letter-spacing: 6px;
+  color: var(--accent); min-height: 60px; letter-spacing: 6px;
   padding: 4px 0;
 }
-#num-display.empty { color: #5c6bc0; font-size: 18px; font-weight: normal; letter-spacing: 0; }
+#num-display.empty { color: var(--text3); font-size: 18px; font-weight: normal; letter-spacing: 0; }
 
 /* search row */
 #search-row {
@@ -41,13 +51,13 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 }
 #search-input {
   flex: 1; height: 38px; padding: 0 10px;
-  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 8px; color: #fff; font-size: 14px; outline: none;
+  background: rgba(200,160,100,0.1); border: 1px solid rgba(200,160,100,0.3);
+  border-radius: 8px; color: var(--text); font-size: 14px; outline: none;
 }
-#search-input::placeholder { color: rgba(255,255,255,0.5); }
+#search-input::placeholder { color: var(--text3); }
 #toc-btn, #search-btn {
-  height: 38px; padding: 0 14px; border: 1px solid rgba(255,255,255,0.4);
-  border-radius: 8px; background: rgba(255,255,255,0.15); color: #fff;
+  height: 38px; padding: 0 14px; border: 1px solid rgba(200,160,100,0.35);
+  border-radius: 8px; background: rgba(200,160,100,0.15); color: var(--accent);
   font-size: 13px; cursor: pointer; white-space: nowrap;
 }
 
@@ -62,37 +72,37 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
   flex: 1; border-radius: 10px; border: none;
   font-weight: bold; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px; color: #fff;
-  background: rgba(255,255,255,0.18);
+  font-size: 28px; color: var(--text);
+  background: rgba(200,160,100,0.16);
   transition: background 0.1s, transform 0.1s;
   min-height: 0;
 }
-.kb-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.96); }
+.kb-btn:active { background: rgba(200,160,100,0.38); transform: scale(0.96); }
 
 /* special buttons */
-.btn-del  { background: rgba(239,83,80,0.7); font-size: 22px; }
-.btn-fu   { background: rgba(255,193,7,0.5); font-size: 22px; }
+.btn-del  { background: rgba(160,70,50,0.6); font-size: 22px; }
+.btn-fu   { background: rgba(185,140,50,0.45); font-size: 22px; }
 
 /* category buttons */
 .cat-btn {
   flex: 1; border-radius: 10px; border: none;
   font-weight: bold; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; color: #fff;
+  font-size: 18px; color: var(--text);
   transition: background 0.1s, transform 0.1s;
   min-height: 0;
 }
-.cat-btn:active { transform: scale(0.96); filter: brightness(1.2); }
-.cat-db  { background: #c62828; }
-.cat-bb  { background: #1565c0; }
-.cat-xg  { background: #2e7d32; }
-.cat-xb  { background: #6a1b9a; }
-.cat-er  { background: #e65100; }
+.cat-btn:active { transform: scale(0.96); filter: brightness(1.15); }
+.cat-db  { background: #7a3020; }  /* 深磚紅 */
+.cat-bb  { background: #5a3d28; }  /* 摩卡棕 */
+.cat-xb  { background: #6b4e2a; }  /* 焦糖棕 */
+.cat-er  { background: #7a5e1a; }  /* 琥珀金 */
+.cat-xg  { background: #4a3525; }  /* 黑巧克力 */
 
 /* ── CONTENT VIEW (score viewer) ── */
 #content-view {
   position: fixed; inset: 0; z-index: 100;
-  background: #000;
+  background: #1a1008;
   display: flex; flex-direction: column;
   transform: translateY(100%);
   transition: transform 0.3s ease;
@@ -101,19 +111,20 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 
 #content-header {
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px; background: #1a237e;
+  padding: 6px 10px; background: var(--surface);
   flex-shrink: 0; min-height: 44px;
+  border-bottom: 1px solid rgba(200,160,100,0.2);
 }
 #back-btn {
-  background: none; border: none; color: #90caf9;
+  background: none; border: none; color: var(--accent);
   font-size: 28px; cursor: pointer; padding: 0 6px;
   line-height: 1;
 }
 #content-info { flex: 1; }
-#content-cat  { font-size: 11px; color: #90caf9; }
-#content-title { font-size: 15px; font-weight: bold; color: #fff; }
+#content-cat  { font-size: 11px; color: var(--text2); }
+#content-title { font-size: 15px; font-weight: bold; color: var(--text); }
 #yt-btn {
-  background: #cc0000; color: #fff; border: none;
+  background: #7a3020; color: var(--text); border: none;
   border-radius: 6px; padding: 6px 10px; font-size: 12px;
   cursor: pointer; white-space: nowrap; display: none;
 }
@@ -132,12 +143,12 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  color: #90caf9; font-size: 16px; gap: 12px;
+  color: var(--accent); font-size: 16px; gap: 12px;
 }
 .spinner {
   width: 36px; height: 36px;
-  border: 3px solid rgba(255,255,255,0.2);
-  border-top-color: #90caf9;
+  border: 3px solid rgba(200,160,100,0.2);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -146,7 +157,7 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 /* page indicator */
 #page-indicator {
   position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-  background: rgba(0,0,0,0.6); color: #fff;
+  background: rgba(42,28,17,0.8); color: var(--accent);
   padding: 3px 10px; border-radius: 12px; font-size: 12px;
   pointer-events: none;
 }
@@ -154,11 +165,11 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 /* nav arrows */
 #nav-prev, #nav-next {
   position: absolute; top: 50%; transform: translateY(-50%);
-  background: rgba(0,0,0,0.5); color: #fff; border: none;
+  background: rgba(42,28,17,0.65); color: var(--accent); border: none;
   border-radius: 50%; width: 40px; height: 40px;
   font-size: 22px; cursor: pointer; display: flex;
   align-items: center; justify-content: center;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 #nav-prev { left: 6px; }
 #nav-next { right: 6px; }
@@ -166,81 +177,82 @@ html, body { height: 100%; overflow: hidden; background: #1a237e; color: #fff;
 /* lyrics toggle */
 #lyrics-panel {
   max-height: 0; overflow: hidden; transition: max-height 0.3s;
-  background: #111; color: #ddd;
+  background: var(--surface); color: var(--text);
 }
 #lyrics-panel.open { max-height: 40vh; overflow-y: auto; }
 #lyrics-content { padding: 12px 16px; font-size: 15px; line-height: 1.9; white-space: pre-wrap; }
 #lyrics-toggle {
-  background: #1a237e; border: none; color: #90caf9;
-  width: 100%; padding: 6px; font-size: 13px; cursor: pointer;
+  background: var(--surface); border: none; border-top: 1px solid rgba(200,160,100,0.2);
+  color: var(--accent2); width: 100%; padding: 6px; font-size: 13px; cursor: pointer;
   flex-shrink: 0;
 }
 
 /* TOC overlay */
 #toc-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.6);
+  background: rgba(20,12,5,0.75);
   display: none; flex-direction: column;
 }
 #toc-overlay.open { display: flex; }
 #toc-panel {
-  background: #1a237e; margin-top: auto;
+  background: var(--surface); margin-top: auto;
   max-height: 80vh; display: flex; flex-direction: column;
   border-radius: 16px 16px 0 0;
+  border-top: 1px solid rgba(200,160,100,0.25);
 }
 #toc-header {
   display: flex; align-items: center; padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-bottom: 1px solid rgba(200,160,100,0.18);
 }
-#toc-title { flex: 1; font-size: 16px; font-weight: bold; }
-#toc-close { background: none; border: none; color: #90caf9; font-size: 24px; cursor: pointer; }
+#toc-title { flex: 1; font-size: 16px; font-weight: bold; color: var(--text); }
+#toc-close { background: none; border: none; color: var(--accent2); font-size: 24px; cursor: pointer; }
 #toc-cat-btns { display: flex; gap: 6px; padding: 10px 16px; overflow-x: auto; }
 .toc-cat-btn {
   padding: 6px 14px; border-radius: 16px; border: none;
-  color: #fff; font-size: 13px; cursor: pointer; white-space: nowrap;
-  opacity: 0.6;
+  color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap;
+  opacity: 0.55;
 }
 .toc-cat-btn.active { opacity: 1; font-weight: bold; }
 #toc-search { margin: 0 16px 8px; height: 36px; padding: 0 12px;
-  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 8px; color: #fff; font-size: 14px; outline: none; }
-#toc-search::placeholder { color: rgba(255,255,255,0.4); }
+  background: rgba(200,160,100,0.1); border: 1px solid rgba(200,160,100,0.28);
+  border-radius: 8px; color: var(--text); font-size: 14px; outline: none; }
+#toc-search::placeholder { color: var(--text3); }
 #toc-list { flex: 1; overflow-y: auto; }
 .toc-item {
   display: flex; align-items: center; padding: 10px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+  border-bottom: 1px solid rgba(200,160,100,0.1); cursor: pointer;
   gap: 12px;
 }
-.toc-item:active { background: rgba(255,255,255,0.1); }
+.toc-item:active { background: rgba(200,160,100,0.1); }
 .toc-num {
   min-width: 44px; height: 32px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: bold; color: #fff;
-  background: rgba(255,255,255,0.15);
+  font-size: 13px; font-weight: bold; color: var(--accent);
+  background: rgba(200,160,100,0.15);
 }
-.toc-name { font-size: 14px; color: #e3f2fd; }
+.toc-name { font-size: 14px; color: var(--text2); }
 .toc-section {
-  padding: 6px 16px; font-size: 11px; color: #90caf9;
-  background: rgba(0,0,0,0.2); letter-spacing: 1px;
+  padding: 6px 16px; font-size: 11px; color: var(--accent2);
+  background: rgba(20,12,5,0.4); letter-spacing: 1px;
   position: sticky; top: 0;
 }
 
 /* PWA install banner */
 #install-banner {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
-  background: #283593; border-top: 1px solid rgba(255,255,255,0.2);
+  background: var(--surface2); border-top: 1px solid rgba(200,160,100,0.25);
   padding: 10px 14px; display: flex; align-items: center; gap: 10px;
   transform: translateY(100%); transition: transform 0.4s;
 }
 #install-banner.show { transform: translateY(0); }
-.install-text { flex: 1; font-size: 13px; }
-.install-text strong { font-size: 14px; display: block; }
+.install-text { flex: 1; font-size: 13px; color: var(--text2); }
+.install-text strong { font-size: 14px; display: block; color: var(--text); }
 #install-btn {
-  background: #90caf9; color: #1a237e; border: none;
+  background: var(--accent); color: var(--bg); border: none;
   border-radius: 8px; padding: 7px 14px; font-weight: bold;
   font-size: 13px; cursor: pointer;
 }
-#dismiss-install { background: none; border: none; color: #90caf9; font-size: 20px; cursor: pointer; }
+#dismiss-install { background: none; border: none; color: var(--accent2); font-size: 20px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -569,7 +581,7 @@ function showPage(idx) {
   img.onerror = () => {
     const isFuErr = currentCat === 'db' && currentNum > DB_FU_OFFSET;
     const displayNumErr = isFuErr ? '附 ' + (currentNum - DB_FU_OFFSET) : '第 ' + currentNum;
-    loading.innerHTML = '<div style="text-align:center;color:#90caf9;padding:20px">🎵<br>' + displayNumErr + ' 首<br><small style="color:#666">樂譜圖片暫無</small></div>';
+    loading.innerHTML = '<div style="text-align:center;color:#c9a87a;padding:20px">🎵<br>' + displayNumErr + ' 首<br><small style="color:#7a5c3a">樂譜圖片暫無</small></div>';
   };
   img.src = currentPages[idx];
 }
@@ -679,7 +691,7 @@ async function switchTocCat(cat) {
   document.getElementById('toc-title').textContent = CATS[cat].label;
 
   if (!tocCache[cat]) {
-    document.getElementById('toc-list').innerHTML = '<div style="padding:20px;text-align:center;color:#90caf9"><div class="spinner" style="margin:auto"></div></div>';
+    document.getElementById('toc-list').innerHTML = '<div style="padding:20px;text-align:center;color:#c9a87a"><div class="spinner" style="margin:auto"></div></div>';
     const txt = await fetch(BASE + 'lyrics_toc/' + CATS[cat].tocFile).then(r=>r.text());
     tocCache[cat] = parseToc(txt);
   }
@@ -703,7 +715,7 @@ function parseToc(txt) {
 
 function renderTocList(hymns) {
   const list = document.getElementById('toc-list');
-  if (!hymns.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:#90caf9">找不到</div>'; return; }
+  if (!hymns.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:#c9a87a">找不到</div>'; return; }
   const frag = document.createDocumentFragment();
   let lastSection = null;
   for (const h of hymns) {
@@ -766,7 +778,7 @@ document.getElementById('dismiss-install').addEventListener('click', () => {
 // iOS hint
 if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone && !installDismissed) {
   setTimeout(() => {
-    document.getElementById('install-banner').innerHTML = `<div class="install-text"><strong>加入主畫面</strong>點分享 → 「加入主畫面」即可安裝</div><button id="dismiss-install" style="background:none;border:none;color:#90caf9;font-size:20px;cursor:pointer;margin-left:auto" onclick="localStorage.setItem('installDismissed','1');this.closest('#install-banner').classList.remove('show')">✕</button>`;
+    document.getElementById('install-banner').innerHTML = `<div class="install-text"><strong>加入主畫面</strong>點分享 → 「加入主畫面」即可安裝</div><button id="dismiss-install" style="background:none;border:none;color:#c9a87a;font-size:20px;cursor:pointer;margin-left:auto" onclick="localStorage.setItem('installDismissed','1');this.closest('#install-banner').classList.remove('show')">✕</button>`;
     document.getElementById('install-banner').classList.add('show');
   }, 3000);
 }
