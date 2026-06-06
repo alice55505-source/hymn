@@ -74,6 +74,31 @@ jobs:
             echo "WARNING: MainActivity.smali not found"
           fi
 
+      - name: Hide 教唱/唱詩/媒體 buttons, keep only 伴奏 and search
+        run: |
+          LAYOUT="hymnchtv-decompiled/res/layout/media_select.xml"
+          if [ -f "$LAYOUT" ]; then
+            python3 << 'PYEOF'
+            import re
+
+            with open('hymnchtv-decompiled/res/layout/media_select.xml', encoding='utf-8') as f:
+                content = f.read()
+
+            # Hide btn_media, btn_jiaochang, btn_changshi by adding visibility="gone"
+            for btn in ['btn_media', 'btn_jiaochang', 'btn_changshi']:
+                content = content.replace(
+                    f'android:id="@id/{btn}"',
+                    f'android:id="@id/{btn}" android:visibility="gone"'
+                )
+
+            with open('hymnchtv-decompiled/res/layout/media_select.xml', 'w', encoding='utf-8') as f:
+                f.write(content)
+            print("Hidden unwanted media buttons")
+            PYEOF
+          else
+            echo "WARNING: media_select.xml not found"
+          fi
+
       - name: Convert strings to Traditional Chinese
         run: |
           python3 << 'PYEOF'
