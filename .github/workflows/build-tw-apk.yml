@@ -74,6 +74,221 @@ jobs:
             echo "WARNING: MainActivity.smali not found"
           fi
 
+      - name: Add score/lyrics toggle button and patch ContentView smali
+        run: |
+          python3 << 'PYEOF'
+          import re
+
+          # --- 1. Wrap score ImageViews in score_container in content_lyrics.xml ---
+          LAYOUT = 'hymnchtv-decompiled/res/layout/content_lyrics.xml'
+          with open(LAYOUT, encoding='utf-8') as f:
+              content = f.read()
+
+          # Find the first ImageView (contentView) and the button row LinearLayout
+          # Wrap all 5 ImageViews in a score_container LinearLayout
+          IMAGES_BLOCK = (
+              '<ImageView android:id="@id/contentView" android:layout_width="fill_parent" '
+              'android:layout_height="fill_parent" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        <ImageView android:id="@id/contentView_a" android:layout_width="fill_parent" '
+              'android:layout_height="wrap_content" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        <ImageView android:id="@id/contentView_b" android:layout_width="fill_parent" '
+              'android:layout_height="wrap_content" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        <ImageView android:id="@id/contentView_c" android:layout_width="fill_parent" '
+              'android:layout_height="wrap_content" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        <ImageView android:id="@id/contentView_d" android:layout_width="fill_parent" '
+              'android:layout_height="wrap_content" android:scaleType="fitStart" android:adjustViewBounds="true" />'
+          )
+          IMAGES_WRAPPED = (
+              '<LinearLayout android:id="@id/score_container" android:orientation="vertical" '
+              'android:layout_width="fill_parent" android:layout_height="wrap_content">\n'
+              '        <ImageView android:id="@id/contentView" android:layout_width="fill_parent" '
+              'android:layout_height="fill_parent" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        <ImageView android:id="@id/contentView_a" android:layout_width="fill_parent" '
+              'android:layout_height="wrap_content" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        <ImageView android:id="@id/contentView_b" android:layout_width="fill_parent" '
+              'android:layout_height="wrap_content" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        <ImageView android:id="@id/contentView_c" android:layout_width="fill_parent" '
+              'android:layout_height="wrap_content" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        <ImageView android:id="@id/contentView_d" android:layout_width="fill_parent" '
+              'android:layout_height="wrap_content" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
+              '        </LinearLayout>'
+          )
+          if IMAGES_BLOCK in content:
+              content = content.replace(IMAGES_BLOCK, IMAGES_WRAPPED)
+              print("Wrapped score images in score_container")
+          else:
+              # Fallback: simple regex approach
+              content = re.sub(
+                  r'(<ImageView android:id="@id/contentView"[^/]*/>\s*'
+                   r'<ImageView android:id="@id/contentView_a"[^/]*/>\s*'
+                   r'<ImageView android:id="@id/contentView_b"[^/]*/>\s*'
+                   r'<ImageView android:id="@id/contentView_c"[^/]*/>\s*'
+                   r'<ImageView android:id="@id/contentView_d"[^/]*/>)',
+                  r'<LinearLayout android:id="@id/score_container" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content">\n        \1\n        </LinearLayout>',
+                  content, flags=re.DOTALL
+              )
+              print("Wrapped score images in score_container (regex fallback)")
+
+          with open(LAYOUT, 'w', encoding='utf-8') as f:
+              f.write(content)
+
+          # --- 2. Add score_container to public.xml ---
+          PUBLIC = 'hymnchtv-decompiled/res/values/public.xml'
+          with open(PUBLIC, encoding='utf-8') as f:
+              pub = f.read()
+          SCORE_ENTRY = '    <public type="id" name="score_container" id="0x7f0a02b7" />\n'
+          if 'score_container' not in pub:
+              # Insert after youtube_player_view entry
+              pub = pub.replace(
+                  '    <public type="id" name="zoom" id="0x7f0a02b6" />',
+                  '    <public type="id" name="zoom" id="0x7f0a02b6" />\n' + SCORE_ENTRY
+              )
+              with open(PUBLIC, 'w', encoding='utf-8') as f:
+                  f.write(pub)
+              print("Added score_container to public.xml")
+
+          # --- 3. Change button_ts label in strings.xml ---
+          for path in [
+              'hymnchtv-decompiled/res/values/strings.xml',
+              'hymnchtv-decompiled/res/values-zh-rTW/strings.xml',
+              'hymnchtv-decompiled/res/values-zh-rCN/strings.xml',
+          ]:
+              import os
+              if not os.path.exists(path):
+                  continue
+              with open(path, encoding='utf-8') as f:
+                  s = f.read()
+              s = re.sub(
+                  r'<string name="lyrics_chinese_traditional">.*?</string>',
+                  '<string name="lyrics_chinese_traditional">歌詞</string>',
+                  s
+              )
+              with open(path, 'w', encoding='utf-8') as f:
+                  f.write(s)
+          print("Updated button label to 歌詞")
+
+          # --- 4. Patch ContentView.smali ---
+          SMALI = 'hymnchtv-decompiled/smali_classes3/org/cog/hymnchtv/ContentView.smali'
+          with open(SMALI, encoding='utf-8') as f:
+              smali = f.read()
+
+          # 4a. Simplify onClick() for button_ts: just toggle isSimplify, call toggleLyricsView
+          OLD_ONCLICK = """    :cond_0
+    iget-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z
+
+    if-nez p1, :cond_1
+
+    .line 246
+    iget-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z
+
+    xor-int/lit8 p1, p1, 0x1
+
+    iput-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z
+
+    .line 247
+    iget-object v0, p0, Lorg/cog/hymnchtv/ContentView;->mEditor:Landroid/content/SharedPreferences$Editor;
+
+    const-string v1, "LyricsSimplify"
+
+    invoke-interface {v0, v1, p1}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;
+
+    .line 248
+    iget-object p1, p0, Lorg/cog/hymnchtv/ContentView;->mEditor:Landroid/content/SharedPreferences$Editor;
+
+    invoke-interface {p1}, Landroid/content/SharedPreferences$Editor;->apply()V
+
+    goto :goto_0
+
+    :cond_1
+    const/4 p1, 0x0
+
+    .line 251
+    iput-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z
+
+    .line 253
+    :goto_0
+    invoke-direct {p0}, Lorg/cog/hymnchtv/ContentView;->toggleLyricsView()V
+
+    return-void"""
+
+          NEW_ONCLICK = """    :cond_0
+    iget-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z
+
+    xor-int/lit8 p1, p1, 0x1
+
+    iput-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z
+
+    invoke-direct {p0}, Lorg/cog/hymnchtv/ContentView;->toggleLyricsView()V
+
+    return-void"""
+
+          if OLD_ONCLICK in smali:
+              smali = smali.replace(OLD_ONCLICK, NEW_ONCLICK)
+              print("Patched onClick() for button_ts")
+          else:
+              print("WARNING: onClick pattern not found - manual check needed")
+
+          # 4b. Patch toggleLyricsView() to toggle score_container visibility
+          OLD_LOCALS = ".method private toggleLyricsView()V\n    .locals 4"
+          NEW_LOCALS = ".method private toggleLyricsView()V\n    .locals 5"
+          smali = smali.replace(OLD_LOCALS, NEW_LOCALS, 1)
+
+          # Insert score_container toggle after the three setVisibility(GONE) calls for text views
+          OLD_HIDE_TEXT = (
+              "    iget-object v0, p0, Lorg/cog/hymnchtv/ContentView;->lyricsEnglish:Landroid/webkit/WebView;\n"
+              "\n"
+              "    invoke-virtual {v0, v1}, Landroid/webkit/WebView;->setVisibility(I)V\n"
+              "\n"
+              "    .line 540"
+          )
+          NEW_HIDE_TEXT = (
+              "    iget-object v0, p0, Lorg/cog/hymnchtv/ContentView;->lyricsEnglish:Landroid/webkit/WebView;\n"
+              "\n"
+              "    invoke-virtual {v0, v1}, Landroid/webkit/WebView;->setVisibility(I)V\n"
+              "\n"
+              "    iget-object v2, p0, Lorg/cog/hymnchtv/ContentView;->mConvertView:Landroid/view/View;\n"
+              "\n"
+              "    const v3, 0x7f0a02b7\n"
+              "\n"
+              "    invoke-virtual {v2, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;\n"
+              "\n"
+              "    move-result-object v4\n"
+              "\n"
+              "    if-eqz v4, :cond_score_skip\n"
+              "\n"
+              "    iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z\n"
+              "\n"
+              "    if-nez v2, :cond_score_hide\n"
+              "\n"
+              "    iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z\n"
+              "\n"
+              "    if-nez v2, :cond_score_hide\n"
+              "\n"
+              "    const/4 v2, 0x0\n"
+              "\n"
+              "    invoke-virtual {v4, v2}, Landroid/view/View;->setVisibility(I)V\n"
+              "\n"
+              "    goto :cond_score_skip\n"
+              "\n"
+              "    :cond_score_hide\n"
+              "\n"
+              "    invoke-virtual {v4, v1}, Landroid/view/View;->setVisibility(I)V\n"
+              "\n"
+              "    :cond_score_skip\n"
+              "\n"
+              "    .line 540"
+          )
+          if OLD_HIDE_TEXT in smali:
+              smali = smali.replace(OLD_HIDE_TEXT, NEW_HIDE_TEXT, 1)
+              print("Patched toggleLyricsView() with score_container toggle")
+          else:
+              print("WARNING: toggleLyricsView pattern not found - manual check needed")
+
+          with open(SMALI, 'w', encoding='utf-8') as f:
+              f.write(smali)
+          print("ContentView.smali patched")
+          PYEOF
+
       - name: Hide 教唱/唱詩/媒體 buttons, keep only 伴奏 and search
         run: |
           LAYOUT="hymnchtv-decompiled/res/layout/media_select.xml"
