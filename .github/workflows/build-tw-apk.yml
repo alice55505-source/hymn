@@ -227,15 +227,18 @@ jobs:
             -storepass hymntw123 \
             -keypass hymntw123 \
             -dname "CN=HymnTW, OU=HymnTW, O=HymnTW, L=TW, S=TW, C=TW"
-          jarsigner \
-            -verbose \
-            -sigalg SHA256withRSA \
-            -digestalg SHA-256 \
-            -keystore hymn.keystore \
-            -storepass hymntw123 \
-            -keypass hymntw123 \
-            hymnchtv-tw-unsigned.apk hymntw
-          mv hymnchtv-tw-unsigned.apk hymnchtv-tw.apk
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          echo "Build tools: $BUILD_TOOLS"
+          $BUILD_TOOLS/zipalign -v 4 hymnchtv-tw-unsigned.apk hymnchtv-tw-aligned.apk
+          $BUILD_TOOLS/apksigner sign \
+            --ks hymn.keystore \
+            --ks-pass pass:hymntw123 \
+            --key-pass pass:hymntw123 \
+            --ks-key-alias hymntw \
+            --out hymnchtv-tw.apk \
+            hymnchtv-tw-aligned.apk
+          $BUILD_TOOLS/apksigner verify --verbose hymnchtv-tw.apk
+          ls -lh hymnchtv-tw.apk
 
       - name: Create or update GitHub Release
         run: |
