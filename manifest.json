@@ -4,8 +4,8 @@
   "description": "繁體中文詩歌本 PWA - 大本詩歌、補充本、新歌頌咏、兒童詩歌",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#4a90d9",
+  "background_color": "#f5ede0",
+  "theme_color": "#7a4f2a",
   "orientation": "portrait-primary",
   "lang": "zh-TW",
   "icons": [

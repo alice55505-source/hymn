@@ -1,9 +1,11 @@
-const CACHE_NAME = 'hymnch-v1';
+const CACHE_NAME = 'hymnch-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/lyrics-index.txt'
+  '/lyrics-index.txt',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
