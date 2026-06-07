@@ -291,28 +291,23 @@ jobs:
 
       - name: Hide 教唱/唱詩/媒體 buttons, keep only 伴奏 and search
         run: |
-          LAYOUT="hymnchtv-decompiled/res/layout/media_select.xml"
-          if [ -f "$LAYOUT" ]; then
-            python3 << 'PYEOF'
-            import re
+          python3 - << 'PYEOF'
+import os, re
 
-            with open('hymnchtv-decompiled/res/layout/media_select.xml', encoding='utf-8') as f:
-                content = f.read()
-
-            # Hide btn_media, btn_jiaochang, btn_changshi by adding visibility="gone"
-            for btn in ['btn_media', 'btn_jiaochang', 'btn_changshi']:
-                content = content.replace(
-                    f'android:id="@id/{btn}"',
-                    f'android:id="@id/{btn}" android:visibility="gone"'
-                )
-
-            with open('hymnchtv-decompiled/res/layout/media_select.xml', 'w', encoding='utf-8') as f:
-                f.write(content)
-            print("Hidden unwanted media buttons")
-            PYEOF
-          else
-            echo "WARNING: media_select.xml not found"
-          fi
+LAYOUT = 'hymnchtv-decompiled/res/layout/media_select.xml'
+if not os.path.exists(LAYOUT):
+    print("WARNING: media_select.xml not found")
+else:
+    with open(LAYOUT, encoding='utf-8') as f:
+        content = f.read()
+    for btn in ['btn_media', 'btn_jiaochang', 'btn_changshi']:
+        content = content.replace(
+            f'android:id="@id/{btn}"',
+            f'android:id="@id/{btn}" android:visibility="gone"'
+        )
+    with open(LAYOUT, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print("Hidden unwanted media buttons")
 
       - name: Convert strings to Traditional Chinese
         run: |
