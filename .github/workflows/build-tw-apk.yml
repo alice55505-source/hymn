@@ -167,126 +167,126 @@ jobs:
                   f.write(s)
           print("Updated button label to 歌詞")
 
-          # --- 4. Patch ContentView.smali ---
-          SMALI = 'hymnchtv-decompiled/smali_classes3/org/cog/hymnchtv/ContentView.smali'
-          with open(SMALI, encoding='utf-8') as f:
-              smali = f.read()
-
-          # 4a. Simplify onClick() for button_ts: just toggle isSimplify, call toggleLyricsView
-          OLD_ONCLICK = """    :cond_0
-    iget-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z
-
-    if-nez p1, :cond_1
-
-    .line 246
-    iget-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z
-
-    xor-int/lit8 p1, p1, 0x1
-
-    iput-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z
-
-    .line 247
-    iget-object v0, p0, Lorg/cog/hymnchtv/ContentView;->mEditor:Landroid/content/SharedPreferences$Editor;
-
-    const-string v1, "LyricsSimplify"
-
-    invoke-interface {v0, v1, p1}, Landroid/content/SharedPreferences$Editor;->putBoolean(Ljava/lang/String;Z)Landroid/content/SharedPreferences$Editor;
-
-    .line 248
-    iget-object p1, p0, Lorg/cog/hymnchtv/ContentView;->mEditor:Landroid/content/SharedPreferences$Editor;
-
-    invoke-interface {p1}, Landroid/content/SharedPreferences$Editor;->apply()V
-
-    goto :goto_0
-
-    :cond_1
-    const/4 p1, 0x0
-
-    .line 251
-    iput-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z
-
-    .line 253
-    :goto_0
-    invoke-direct {p0}, Lorg/cog/hymnchtv/ContentView;->toggleLyricsView()V
-
-    return-void"""
-
-          NEW_ONCLICK = """    :cond_0
-    iget-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z
-
-    xor-int/lit8 p1, p1, 0x1
-
-    iput-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z
-
-    invoke-direct {p0}, Lorg/cog/hymnchtv/ContentView;->toggleLyricsView()V
-
-    return-void"""
-
-          if OLD_ONCLICK in smali:
-              smali = smali.replace(OLD_ONCLICK, NEW_ONCLICK)
-              print("Patched onClick() for button_ts")
+          # --- 4. Patch ContentView.smali (state-machine, no triple-quoted smali strings) ---
+          import glob as _glob
+          _sm = _glob.glob('hymnchtv-decompiled/smali_classes*/org/cog/hymnchtv/ContentView.smali')
+          if not _sm:
+              print("WARNING: ContentView.smali not found")
           else:
-              print("WARNING: onClick pattern not found - manual check needed")
+              SMALI = _sm[0]
+              print("Found: " + SMALI)
+              with open(SMALI, encoding='utf-8') as f:
+                  lines = f.readlines()
 
-          # 4b. Patch toggleLyricsView() to toggle score_container visibility
-          OLD_LOCALS = ".method private toggleLyricsView()V\n    .locals 4"
-          NEW_LOCALS = ".method private toggleLyricsView()V\n    .locals 5"
-          smali = smali.replace(OLD_LOCALS, NEW_LOCALS, 1)
+              # 4a. State machine: find :cond_0 followed by hasEnglishLyrics, replace block
+              new_lines = []
+              i = 0
+              patched_onclick = False
+              while i < len(lines):
+                  line = lines[i]
+                  if line.strip() == ':cond_0' and not patched_onclick:
+                      j = i + 1
+                      while j < len(lines) and lines[j].strip() == '':
+                          j += 1
+                      if j < len(lines) and 'hasEnglishLyrics' in lines[j]:
+                          k = j + 1
+                          while k < len(lines) and lines[k].strip() != 'return-void':
+                              k += 1
+                          ind = '    '
+                          new_lines.append(ind + ':cond_0\n')
+                          new_lines.append(ind + 'iget-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'xor-int/lit8 p1, p1, 0x1\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'iput-boolean p1, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'invoke-direct {p0}, Lorg/cog/hymnchtv/ContentView;->toggleLyricsView()V\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'return-void\n')
+                          patched_onclick = True
+                          i = k + 1
+                          print("Patched onClick() for button_ts")
+                          continue
+                  new_lines.append(line)
+                  i += 1
+              if not patched_onclick:
+                  print("WARNING: onClick pattern not found")
+              lines = new_lines
 
-          # Insert score_container toggle after the three setVisibility(GONE) calls for text views
-          OLD_HIDE_TEXT = (
-              "    iget-object v0, p0, Lorg/cog/hymnchtv/ContentView;->lyricsEnglish:Landroid/webkit/WebView;\n"
-              "\n"
-              "    invoke-virtual {v0, v1}, Landroid/webkit/WebView;->setVisibility(I)V\n"
-              "\n"
-              "    .line 540"
-          )
-          NEW_HIDE_TEXT = (
-              "    iget-object v0, p0, Lorg/cog/hymnchtv/ContentView;->lyricsEnglish:Landroid/webkit/WebView;\n"
-              "\n"
-              "    invoke-virtual {v0, v1}, Landroid/webkit/WebView;->setVisibility(I)V\n"
-              "\n"
-              "    iget-object v2, p0, Lorg/cog/hymnchtv/ContentView;->mConvertView:Landroid/view/View;\n"
-              "\n"
-              "    const v3, 0x7f0a02b7\n"
-              "\n"
-              "    invoke-virtual {v2, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;\n"
-              "\n"
-              "    move-result-object v4\n"
-              "\n"
-              "    if-eqz v4, :cond_score_skip\n"
-              "\n"
-              "    iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z\n"
-              "\n"
-              "    if-nez v2, :cond_score_hide\n"
-              "\n"
-              "    iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z\n"
-              "\n"
-              "    if-nez v2, :cond_score_hide\n"
-              "\n"
-              "    const/4 v2, 0x0\n"
-              "\n"
-              "    invoke-virtual {v4, v2}, Landroid/view/View;->setVisibility(I)V\n"
-              "\n"
-              "    goto :cond_score_skip\n"
-              "\n"
-              "    :cond_score_hide\n"
-              "\n"
-              "    invoke-virtual {v4, v1}, Landroid/view/View;->setVisibility(I)V\n"
-              "\n"
-              "    :cond_score_skip\n"
-              "\n"
-              "    .line 540"
-          )
-          if OLD_HIDE_TEXT in smali:
-              smali = smali.replace(OLD_HIDE_TEXT, NEW_HIDE_TEXT, 1)
-              print("Patched toggleLyricsView() with score_container toggle")
-          else:
-              print("WARNING: toggleLyricsView pattern not found - manual check needed")
+              # 4b. Change .locals 4 -> .locals 5 in toggleLyricsView
+              in_toggle = False
+              new_lines = []
+              patched_locals = False
+              for line in lines:
+                  if '.method private toggleLyricsView()V' in line:
+                      in_toggle = True
+                  if in_toggle and not patched_locals and '.locals 4' in line:
+                      line = line.replace('.locals 4', '.locals 5')
+                      patched_locals = True
+                      print("Patched .locals in toggleLyricsView()")
+                  new_lines.append(line)
+              lines = new_lines
 
-          with open(SMALI, 'w', encoding='utf-8') as f:
-              f.write(smali)
-          print("ContentView.smali patched")
+              # 4c. Insert score_container toggle after lyricsEnglish setVisibility in toggleLyricsView
+              in_toggle = False
+              new_lines = []
+              i = 0
+              patched_score = False
+              while i < len(lines):
+                  line = lines[i]
+                  if '.method private toggleLyricsView()V' in line:
+                      in_toggle = True
+                  if in_toggle and not patched_score and 'lyricsEnglish:Landroid/webkit/WebView;' in line:
+                      new_lines.append(line)
+                      i += 1
+                      while i < len(lines) and lines[i].strip() == '':
+                          new_lines.append(lines[i])
+                          i += 1
+                      if i < len(lines) and 'WebView;->setVisibility(I)V' in lines[i]:
+                          new_lines.append(lines[i])
+                          i += 1
+                          ind = '    '
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'iget-object v2, p0, Lorg/cog/hymnchtv/ContentView;->mConvertView:Landroid/view/View;\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'const v3, 0x7f0a02b7\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'invoke-virtual {v2, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'move-result-object v4\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'if-eqz v4, :cond_score_skip\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'if-nez v2, :cond_score_hide\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'if-nez v2, :cond_score_hide\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'const/4 v2, 0x0\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'invoke-virtual {v4, v2}, Landroid/view/View;->setVisibility(I)V\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'goto :cond_score_skip\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + ':cond_score_hide\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + 'invoke-virtual {v4, v1}, Landroid/view/View;->setVisibility(I)V\n')
+                          new_lines.append('\n')
+                          new_lines.append(ind + ':cond_score_skip\n')
+                          patched_score = True
+                          print("Patched toggleLyricsView() with score_container toggle")
+                      continue
+                  new_lines.append(line)
+                  i += 1
+              if not patched_score:
+                  print("WARNING: toggleLyricsView score_container patch not applied")
+
+              with open(SMALI, 'w', encoding='utf-8') as f:
+                  f.writelines(new_lines)
+              print("ContentView.smali patched")
           PYEOF
 
       - name: Hide 教唱/唱詩/媒體 buttons, keep only 伴奏 and search
