@@ -310,17 +310,74 @@ jobs:
                   f.writelines(new_lines)
               print("ContentView.smali patched")
 
-              # Investigate share functionality for next fix
-              print("=== SHARE CODE INVESTIGATION ===")
-              with open(SMALI, encoding='utf-8') as f:
-                  sm_lines = f.readlines()
-              for idx, ln in enumerate(sm_lines):
-                  if any(kw in ln for kw in ['share', 'Share', 'ACTION_SEND', 'shareText', 'setType', 'extra.TEXT', 'extra.STREAM']):
-                      start = max(0, idx - 2)
-                      end = min(len(sm_lines), idx + 3)
-                      print(f"--- line {idx+1} ---")
-                      print(''.join(sm_lines[start:end]))
-              print("=== END SHARE INVESTIGATION ===")
+          # --- 5. Patch ContentHandler.smali: share lyrics text instead of image URIs ---
+          # In lyricsShare(), replace ArrayList<Uri> share with text-only share
+          # Reads fileLyrics (v8=File) content into StringBuilder, calls ShareWith.share(Activity,String)
+          import glob as _glob2
+          _ch = _glob2.glob('hymnchtv-decompiled/smali_classes*/org/cog/hymnchtv/ContentHandler.smali')
+          if not _ch:
+              print("WARNING: ContentHandler.smali not found")
+          else:
+              CH_SMALI = _ch[0]
+              print("Found: " + CH_SMALI)
+              with open(CH_SMALI, encoding='utf-8') as f:
+                  ch_lines = f.readlines()
+              in_share = False
+              new_ch = []
+              i = 0
+              patched_ch = False
+              while i < len(ch_lines):
+                  line = ch_lines[i]
+                  if 'method private lyricsShare()V' in line:
+                      in_share = True
+                  if in_share and '.end method' in line:
+                      in_share = False
+                  if in_share and not patched_ch and 'new-instance' in line and 'Ljava/util/ArrayList;' in line:
+                      j = i + 1
+                      while j < len(ch_lines) and 'ShareWith;->share(' not in ch_lines[j]:
+                          j += 1
+                      i = j + 1
+                      ind = '    '
+                      new_ch.append(ind + 'new-instance v9, Ljava/io/FileInputStream;\n')
+                      new_ch.append(ind + 'invoke-direct {v9, v8}, Ljava/io/FileInputStream;-><init>(Ljava/io/File;)V\n')
+                      new_ch.append('\n')
+                      new_ch.append(ind + 'new-instance v7, Ljava/io/InputStreamReader;\n')
+                      new_ch.append(ind + 'const-string v11, "UTF-8"\n')
+                      new_ch.append(ind + 'invoke-direct {v7, v9, v11}, Ljava/io/InputStreamReader;-><init>(Ljava/io/InputStream;Ljava/lang/String;)V\n')
+                      new_ch.append('\n')
+                      new_ch.append(ind + 'new-instance v10, Ljava/io/BufferedReader;\n')
+                      new_ch.append(ind + 'invoke-direct {v10, v7}, Ljava/io/BufferedReader;-><init>(Ljava/io/Reader;)V\n')
+                      new_ch.append('\n')
+                      new_ch.append(ind + 'new-instance v11, Ljava/lang/StringBuilder;\n')
+                      new_ch.append(ind + 'invoke-direct {v11}, Ljava/lang/StringBuilder;-><init>()V\n')
+                      new_ch.append('\n')
+                      new_ch.append(ind + ':lyrics_read_loop\n')
+                      new_ch.append(ind + 'invoke-virtual {v10}, Ljava/io/BufferedReader;->readLine()Ljava/lang/String;\n')
+                      new_ch.append(ind + 'move-result-object v3\n')
+                      new_ch.append(ind + 'if-eqz v3, :lyrics_read_done\n')
+                      new_ch.append('\n')
+                      new_ch.append(ind + 'invoke-virtual {v11, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n')
+                      new_ch.append(ind + 'const-string v3, "\\n"\n')
+                      new_ch.append(ind + 'invoke-virtual {v11, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n')
+                      new_ch.append(ind + 'goto :lyrics_read_loop\n')
+                      new_ch.append('\n')
+                      new_ch.append(ind + ':lyrics_read_done\n')
+                      new_ch.append(ind + 'invoke-virtual {v10}, Ljava/io/BufferedReader;->close()V\n')
+                      new_ch.append('\n')
+                      new_ch.append(ind + 'invoke-virtual {v11}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;\n')
+                      new_ch.append(ind + 'move-result-object v11\n')
+                      new_ch.append('\n')
+                      new_ch.append(ind + 'invoke-static {p0, v11}, Lorg/cog/hymnchtv/mediaconfig/ShareWith;->share(Landroid/app/Activity;Ljava/lang/String;)Ljava/lang/Intent;\n')
+                      patched_ch = True
+                      print("Patched lyricsShare() to share lyrics as text")
+                      continue
+                  new_ch.append(line)
+                  i += 1
+              if not patched_ch:
+                  print("WARNING: ContentHandler lyricsShare patch not applied")
+              with open(CH_SMALI, 'w', encoding='utf-8') as f:
+                  f.writelines(new_ch)
+              print("ContentHandler.smali patched")
           PYEOF
 
       - name: Hide 教唱/唱詩/媒體 buttons, keep only 伴奏 and search
