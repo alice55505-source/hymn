@@ -259,7 +259,7 @@ jobs:
                           new_lines.append('\n')
                           new_lines.append(ind + 'iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z\n')
                           new_lines.append('\n')
-                          new_lines.append(ind + 'if-nez v2, :cond_score_hide\n')
+                          new_lines.append(ind + 'if-eqz v2, :cond_score_hide\n')
                           new_lines.append('\n')
                           new_lines.append(ind + 'iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z\n')
                           new_lines.append('\n')
@@ -269,7 +269,7 @@ jobs:
                           new_lines.append('\n')
                           new_lines.append(ind + 'invoke-virtual {v4, v2}, Landroid/view/View;->setVisibility(I)V\n')
                           new_lines.append('\n')
-                          new_lines.append(ind + 'goto :cond_score_skip\n')
+                          new_lines.append(ind + 'goto :cond_score_done\n')
                           new_lines.append('\n')
                           new_lines.append(ind + ':cond_score_hide\n')
                           new_lines.append('\n')
@@ -284,9 +284,43 @@ jobs:
               if not patched_score:
                   print("WARNING: toggleLyricsView score_container patch not applied")
 
+              # 4d. Insert :cond_score_done label before last return-void in toggleLyricsView
+              # This is the jump target from the "show score" branch to skip text display
+              in_toggle = False
+              new_lines = []
+              i = 0
+              last_rv_pos = -1
+              while i < len(lines):
+                  line = lines[i]
+                  if '.method private toggleLyricsView()V' in line:
+                      in_toggle = True
+                  if in_toggle and line.strip() == 'return-void':
+                      last_rv_pos = len(new_lines)
+                  if in_toggle and '.end method' in line:
+                      if last_rv_pos >= 0:
+                          new_lines.insert(last_rv_pos, '    :cond_score_done\n')
+                          new_lines.insert(last_rv_pos + 1, '\n')
+                          print("Inserted :cond_score_done label in toggleLyricsView()")
+                      in_toggle = False
+                  new_lines.append(line)
+                  i += 1
+              lines = new_lines
+
               with open(SMALI, 'w', encoding='utf-8') as f:
                   f.writelines(new_lines)
               print("ContentView.smali patched")
+
+              # Investigate share functionality for next fix
+              print("=== SHARE CODE INVESTIGATION ===")
+              with open(SMALI, encoding='utf-8') as f:
+                  sm_lines = f.readlines()
+              for idx, ln in enumerate(sm_lines):
+                  if any(kw in ln for kw in ['share', 'Share', 'ACTION_SEND', 'shareText', 'setType', 'extra.TEXT', 'extra.STREAM']):
+                      start = max(0, idx - 2)
+                      end = min(len(sm_lines), idx + 3)
+                      print(f"--- line {idx+1} ---")
+                      print(''.join(sm_lines[start:end]))
+              print("=== END SHARE INVESTIGATION ===")
           PYEOF
 
       - name: Hide 教唱/唱詩/媒體 buttons, keep only 伴奏 and search
