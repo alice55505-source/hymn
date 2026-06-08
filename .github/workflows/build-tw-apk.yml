@@ -213,98 +213,58 @@ jobs:
                   print("WARNING: onClick pattern not found")
               lines = new_lines
 
-              # 4b. Change .locals 4 -> .locals 5 in toggleLyricsView
+              # 4b. Insert score/text toggle at START of toggleLyricsView (after .locals line)
+              # isSimplify=true  → show score_container, hide all text views, return-void
+              # isSimplify=false → hide score_container, fall through to original code (shows text)
               in_toggle = False
+              patched_toggle = False
               new_lines = []
-              patched_locals = False
               for line in lines:
+                  new_lines.append(line)
                   if '.method private toggleLyricsView()V' in line:
                       in_toggle = True
-                  if in_toggle and not patched_locals and '.locals 4' in line:
-                      line = line.replace('.locals 4', '.locals 5')
-                      patched_locals = True
-                      print("Patched .locals in toggleLyricsView()")
-                  new_lines.append(line)
-              lines = new_lines
-
-              # 4c. Insert score_container toggle after lyricsEnglish setVisibility in toggleLyricsView
-              in_toggle = False
-              new_lines = []
-              i = 0
-              patched_score = False
-              while i < len(lines):
-                  line = lines[i]
-                  if '.method private toggleLyricsView()V' in line:
-                      in_toggle = True
-                  if in_toggle and not patched_score and 'lyricsEnglish:Landroid/webkit/WebView;' in line:
-                      new_lines.append(line)
-                      i += 1
-                      while i < len(lines) and lines[i].strip() == '':
-                          new_lines.append(lines[i])
-                          i += 1
-                      if i < len(lines) and 'WebView;->setVisibility(I)V' in lines[i]:
-                          new_lines.append(lines[i])
-                          i += 1
-                          ind = '    '
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'iget-object v2, p0, Lorg/cog/hymnchtv/ContentView;->mConvertView:Landroid/view/View;\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'const v3, 0x7f0a02b7\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'invoke-virtual {v2, v3}, Landroid/view/View;->findViewById(I)Landroid/view/View;\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'move-result-object v4\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'if-eqz v4, :cond_score_skip\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'if-eqz v2, :cond_score_hide\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'const/4 v2, 0x0\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'invoke-virtual {v4, v2}, Landroid/view/View;->setVisibility(I)V\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'goto :cond_score_done\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + ':cond_score_hide\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'invoke-virtual {v4, v1}, Landroid/view/View;->setVisibility(I)V\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + ':cond_score_skip\n')
-                          patched_score = True
-                          print("Patched toggleLyricsView() with score_container toggle")
-                      continue
-                  new_lines.append(line)
-                  i += 1
-              if not patched_score:
-                  print("WARNING: toggleLyricsView score_container patch not applied")
-              lines = new_lines
-
-              # 4d. Insert :cond_score_done label before last return-void in toggleLyricsView
-              # This is the jump target from the "show score" branch to skip text display
-              in_toggle = False
-              new_lines = []
-              i = 0
-              last_rv_pos = -1
-              while i < len(lines):
-                  line = lines[i]
-                  if '.method private toggleLyricsView()V' in line:
-                      in_toggle = True
-                  if in_toggle and line.strip() == 'return-void':
-                      last_rv_pos = len(new_lines)
-                  if in_toggle and '.end method' in line:
-                      if last_rv_pos >= 0:
-                          new_lines.insert(last_rv_pos, '    :cond_score_done\n')
-                          new_lines.insert(last_rv_pos + 1, '\n')
-                          print("Inserted :cond_score_done label in toggleLyricsView()")
-                      in_toggle = False
-                  new_lines.append(line)
-                  i += 1
+                  if in_toggle and not patched_toggle and line.strip().startswith('.locals '):
+                      ind = '    '
+                      new_lines.append('\n')
+                      new_lines.append(ind + 'iget-boolean v0, p0, Lorg/cog/hymnchtv/ContentView;->isSimplify:Z\n')
+                      new_lines.append(ind + 'if-eqz v0, :cond_score_text_mode\n')
+                      new_lines.append('\n')
+                      new_lines.append(ind + 'iget-object v1, p0, Lorg/cog/hymnchtv/ContentView;->mConvertView:Landroid/view/View;\n')
+                      new_lines.append(ind + 'const v2, 0x7f0a02b7\n')
+                      new_lines.append(ind + 'invoke-virtual {v1, v2}, Landroid/view/View;->findViewById(I)Landroid/view/View;\n')
+                      new_lines.append(ind + 'move-result-object v1\n')
+                      new_lines.append(ind + 'if-eqz v1, :cond_score_text_mode\n')
+                      new_lines.append('\n')
+                      new_lines.append(ind + 'const/4 v2, 0x0\n')
+                      new_lines.append(ind + 'invoke-virtual {v1, v2}, Landroid/view/View;->setVisibility(I)V\n')
+                      new_lines.append('\n')
+                      new_lines.append(ind + 'const/16 v2, 0x8\n')
+                      new_lines.append(ind + 'iget-object v1, p0, Lorg/cog/hymnchtv/ContentView;->lyricsSimplify:Lorg/cog/hymnchtv/utils/ZoomTextView;\n')
+                      new_lines.append(ind + 'invoke-virtual {v1, v2}, Landroid/view/View;->setVisibility(I)V\n')
+                      new_lines.append(ind + 'iget-object v1, p0, Lorg/cog/hymnchtv/ContentView;->lyricsTraditional:Lorg/cog/hymnchtv/utils/ZoomTextView;\n')
+                      new_lines.append(ind + 'invoke-virtual {v1, v2}, Landroid/view/View;->setVisibility(I)V\n')
+                      new_lines.append(ind + 'iget-object v1, p0, Lorg/cog/hymnchtv/ContentView;->lyricsEnglish:Landroid/webkit/WebView;\n')
+                      new_lines.append(ind + 'invoke-virtual {v1, v2}, Landroid/view/View;->setVisibility(I)V\n')
+                      new_lines.append(ind + 'return-void\n')
+                      new_lines.append('\n')
+                      new_lines.append(ind + ':cond_score_text_mode\n')
+                      new_lines.append(ind + 'iget-object v1, p0, Lorg/cog/hymnchtv/ContentView;->mConvertView:Landroid/view/View;\n')
+                      new_lines.append(ind + 'const v2, 0x7f0a02b7\n')
+                      new_lines.append(ind + 'invoke-virtual {v1, v2}, Landroid/view/View;->findViewById(I)Landroid/view/View;\n')
+                      new_lines.append(ind + 'move-result-object v1\n')
+                      new_lines.append(ind + 'if-eqz v1, :cond_score_no_container\n')
+                      new_lines.append(ind + 'const/16 v2, 0x8\n')
+                      new_lines.append(ind + 'invoke-virtual {v1, v2}, Landroid/view/View;->setVisibility(I)V\n')
+                      new_lines.append(ind + ':cond_score_no_container\n')
+                      new_lines.append('\n')
+                      patched_toggle = True
+                      print("Patched toggleLyricsView() with score/text toggle at beginning")
+              if not patched_toggle:
+                  print("WARNING: toggleLyricsView patch not found")
               lines = new_lines
 
               with open(SMALI, 'w', encoding='utf-8') as f:
-                  f.writelines(new_lines)
+                  f.writelines(lines)
               print("ContentView.smali patched")
 
           # --- 5. Patch ContentHandler.smali: share lyrics text instead of image URIs ---
