@@ -485,7 +485,11 @@ const S2T = {
   '驻':'駐','驼':'駝','驾':'駕','骂':'罵','骄':'驕','骇':'駭','骋':'騁','验':'驗','骏':'駿','骑':'騎',
   '骗':'騙','骚':'騷','骛':'騖','骤':'驟','髅':'髏','鱼':'魚','鲜':'鮮','鸟':'鳥','鸠':'鳩','鸡':'雞',
   '鸣':'鳴','鸥':'鷗','鸽':'鴿','鸿':'鴻','鹜':'鶩','鹰':'鷹','麦':'麥','黄':'黃','齐':'齊','齿':'齒',
-  '龙':'龍'
+  '龙':'龍',
+  '万':'萬','丰':'豐','为':'為','乐':'樂','众':'眾','华':'華','变':'變','国':'國',
+  '圣':'聖','处':'處','头':'頭','将':'將','愿':'願','敌':'敵','显':'顯','欢':'歡',
+  '灵':'靈','爱':'愛','称':'稱','经':'經','结':'結','联':'聯','荣':'榮','虽':'雖',
+  '见':'見','观':'觀','诗':'詩','谢':'謝','赞':'讚','辞':'辭','这':'這','远':'遠'
 };
 function s2t(s){ return s ? [...s].map(c=>S2T[c]||c).join('') : s; }
 
@@ -768,7 +772,7 @@ function renderTocList(hymns) {
 }
 
 function filterToc(q) {
-  q = q.trim().toLowerCase();
+  q = s2t(q.trim()).toLowerCase();
   const filtered = q ? tocAllHymns.filter(h => h.title.toLowerCase().includes(q) || String(h.num).includes(q)) : tocAllHymns;
   renderTocList(filtered.map(h => ({ ...h, section: '' })));
 }
@@ -816,7 +820,7 @@ async function doSearch() {
     return;
   }
 
-  const ql = q.toLowerCase();
+  const ql = s2t(q).toLowerCase();
   const titleMatches = [];
   const bodyMatches = [];
 
