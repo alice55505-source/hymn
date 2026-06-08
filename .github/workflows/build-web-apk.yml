@@ -1,0 +1,93 @@
+name: Build Web Hymn APK
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'lyrics-index.txt'
+      - 'sw.js'
+      - 'manifest.json'
+      - 'icon-*.png'
+      - 'android-app/**'
+      - '.github/workflows/build-web-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Download Gradle
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip -O gradle.zip
+          unzip -q gradle.zip
+          echo "GRADLE=$(pwd)/gradle-8.4/bin/gradle" >> $GITHUB_ENV
+
+      - name: Prepare assets and build APK
+        run: |
+          # Copy web assets into android project
+          mkdir -p android-app/app/src/main/assets
+          cp index.html lyrics-index.txt sw.js manifest.json android-app/app/src/main/assets/
+          cp icon-192.png icon-512.png android-app/app/src/main/assets/
+
+          # Copy icon to all mipmap directories
+          for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            mkdir -p android-app/app/src/main/res/$d
+            cp icon-192.png android-app/app/src/main/res/$d/ic_launcher.png
+          done
+
+          # Set local.properties
+          echo "sdk.dir=$ANDROID_HOME" > android-app/local.properties
+
+          # Build release APK
+          cd android-app
+          $GRADLE assembleRelease --no-daemon -q
+          ls -lh app/build/outputs/apk/release/
+
+      - name: Sign APK
+        run: |
+          keytool -genkey -v \
+            -keystore hymn-web.keystore \
+            -alias hymnweb \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass hymnweb123 \
+            -keypass hymnweb123 \
+            -dname "CN=HymnWeb, OU=HymnWeb, O=HymnWeb, L=TW, S=TW, C=TW"
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          $BUILD_TOOLS/zipalign -v 4 \
+            android-app/app/build/outputs/apk/release/app-release-unsigned.apk \
+            hymn-web-aligned.apk
+          $BUILD_TOOLS/apksigner sign \
+            --ks hymn-web.keystore \
+            --ks-pass pass:hymnweb123 \
+            --key-pass pass:hymnweb123 \
+            --ks-key-alias hymnweb \
+            --out hymn-web.apk \
+            hymn-web-aligned.apk
+          $BUILD_TOOLS/apksigner verify --verbose hymn-web.apk
+          ls -lh hymn-web.apk
+
+      - name: Create or update GitHub Release
+        run: |
+          TAG="web-latest"
+          gh release create "$TAG" \
+            --title "詩歌本 Web App APK" \
+            --notes "將詩歌本網站打包成離線 APK。搜尋功能完全離線，個別詩歌歌詞首次需聯網載入後即可離線使用。" \
+            --repo alice55505-source/hymn 2>/dev/null || true
+          gh release upload "$TAG" hymn-web.apk --clobber \
+            --repo alice55505-source/hymn
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
