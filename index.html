@@ -364,7 +364,9 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 // ──────────────────────────────────────────────────────────────
 // CONFIG
 // ──────────────────────────────────────────────────────────────
-const BASE = 'https://raw.githubusercontent.com/cmeng-git/hymnchtv/master/hymnchtv/src/main/assets/';
+const BASE = location.hostname === 'hymn.app.local'
+  ? 'https://hymn.app.local/'
+  : 'https://raw.githubusercontent.com/cmeng-git/hymnchtv/master/hymnchtv/src/main/assets/';
 
 const CATS = {
   db: { label: '大本詩歌', score: 'lyrics_db_score', text: 'lyrics_db_text', prefix: 'db', tocFile: 'toc_db_eng2ch.txt' },

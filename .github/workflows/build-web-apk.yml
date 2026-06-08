@@ -34,12 +34,34 @@ jobs:
           unzip -q gradle.zip
           echo "GRADLE=$(pwd)/gradle-8.4/bin/gradle" >> $GITHUB_ENV
 
+      - name: Download hymn text assets
+        run: |
+          git clone --depth 1 --filter=blob:none --no-checkout \
+            https://github.com/cmeng-git/hymnchtv.git hymnchtv-src
+          cd hymnchtv-src
+          git sparse-checkout init --cone
+          git sparse-checkout set \
+            hymnchtv/src/main/assets/lyrics_db_text \
+            hymnchtv/src/main/assets/lyrics_bb_text \
+            hymnchtv/src/main/assets/lyrics_xg_text \
+            hymnchtv/src/main/assets/lyrics_xb_text \
+            hymnchtv/src/main/assets/lyrics_er_text \
+            hymnchtv/src/main/assets/lyrics_toc
+          git checkout
+          cd ..
+
       - name: Prepare assets and build APK
         run: |
           # Copy web assets into android project
           mkdir -p android-app/app/src/main/assets
           cp index.html lyrics-index.txt sw.js manifest.json android-app/app/src/main/assets/
           cp icon-192.png icon-512.png android-app/app/src/main/assets/
+
+          # Bundle hymn text lyrics and TOC for offline use
+          for d in lyrics_db_text lyrics_bb_text lyrics_xg_text lyrics_xb_text lyrics_er_text lyrics_toc; do
+            cp -r hymnchtv-src/hymnchtv/src/main/assets/$d android-app/app/src/main/assets/
+          done
+          echo "Bundled $(find android-app/app/src/main/assets -name '*.txt' | wc -l) text files"
 
           # Copy icon to all mipmap directories
           for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
@@ -85,7 +107,7 @@ jobs:
           TAG="web-latest"
           gh release create "$TAG" \
             --title "詩歌本 Web App APK" \
-            --notes "將詩歌本網站打包成離線 APK。搜尋功能完全離線，個別詩歌歌詞首次需聯網載入後即可離線使用。" \
+            --notes "將詩歌本網站打包成完全離線 APK。歌詞文字、目錄、搜尋功能全部離線可用。樂譜圖片需聯網。" \
             --repo alice55505-source/hymn 2>/dev/null || true
           gh release upload "$TAG" hymn-web.apk --clobber \
             --repo alice55505-source/hymn
