@@ -100,7 +100,7 @@ jobs:
           )
           IMAGES_WRAPPED = (
               '<LinearLayout android:id="@id/score_container" android:orientation="vertical" '
-              'android:layout_width="fill_parent" android:layout_height="wrap_content">\n'
+              'android:layout_width="fill_parent" android:layout_height="wrap_content" android:visibility="gone">\n'
               '        <ImageView android:id="@id/contentView" android:layout_width="fill_parent" '
               'android:layout_height="fill_parent" android:scaleType="fitStart" android:adjustViewBounds="true" />\n'
               '        <ImageView android:id="@id/contentView_a" android:layout_width="fill_parent" '
@@ -124,7 +124,7 @@ jobs:
                    r'<ImageView android:id="@id/contentView_b"[^/]*/>\s*'
                    r'<ImageView android:id="@id/contentView_c"[^/]*/>\s*'
                    r'<ImageView android:id="@id/contentView_d"[^/]*/>)',
-                  r'<LinearLayout android:id="@id/score_container" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content">\n        \1\n        </LinearLayout>',
+                  r'<LinearLayout android:id="@id/score_container" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:visibility="gone">\n        \1\n        </LinearLayout>',
                   content, flags=re.DOTALL
               )
               print("Wrapped score images in score_container (regex fallback)")
@@ -261,10 +261,6 @@ jobs:
                           new_lines.append('\n')
                           new_lines.append(ind + 'if-eqz v2, :cond_score_hide\n')
                           new_lines.append('\n')
-                          new_lines.append(ind + 'iget-boolean v2, p0, Lorg/cog/hymnchtv/ContentView;->hasEnglishLyrics:Z\n')
-                          new_lines.append('\n')
-                          new_lines.append(ind + 'if-nez v2, :cond_score_hide\n')
-                          new_lines.append('\n')
                           new_lines.append(ind + 'const/4 v2, 0x0\n')
                           new_lines.append('\n')
                           new_lines.append(ind + 'invoke-virtual {v4, v2}, Landroid/view/View;->setVisibility(I)V\n')
@@ -283,6 +279,7 @@ jobs:
                   i += 1
               if not patched_score:
                   print("WARNING: toggleLyricsView score_container patch not applied")
+              lines = new_lines
 
               # 4d. Insert :cond_score_done label before last return-void in toggleLyricsView
               # This is the jump target from the "show score" branch to skip text display
