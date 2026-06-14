@@ -164,17 +164,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   pointer-events: none;
 }
 
-/* nav arrows */
-#nav-prev, #nav-next {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  background: rgba(60,35,15,0.55); color: var(--accent); border: none;
-  border-radius: 50%; width: 40px; height: 40px;
-  font-size: 22px; cursor: pointer; display: flex;
-  align-items: center; justify-content: center;
-  opacity: 0.8;
-}
-#nav-prev { left: 6px; }
-#nav-next { right: 6px; }
 
 /* lyrics toggle */
 #lyrics-panel {
@@ -321,9 +310,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="spinner"></div>
       <span>載入中…</span>
     </div>
-    <button id="nav-prev" onclick="navHymn(-1)">‹</button>
-    <button id="nav-next" onclick="navHymn(1)">›</button>
-    <div id="page-indicator"></div>
+<div id="page-indicator"></div>
   </div>
 
   <button id="lyrics-toggle" onclick="toggleLyrics()">▼ 顯示歌詞</button>
