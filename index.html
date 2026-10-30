@@ -94,6 +94,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .cat-xb  { background: #956828; color: #fff; }  /* 琥珀 */
 .cat-er  { background: #6a7830; color: #fff; }  /* 橄欖 */
 .cat-xg  { background: #4a7068; color: #fff; }  /* 灰松 */
+.cat-tw  { background: #5a5a8a; color: #fff; }  /* 靛藍 */
 
 /* ── CONTENT VIEW (score viewer) ── */
 #content-view {
@@ -323,6 +324,7 @@ body.mode-text .font-btn { display: inline-block; flex-shrink: 0; }
       <button class="cat-btn cat-xb" onclick="openHymnByNum('xb')">新頌</button>
       <button class="cat-btn cat-er" onclick="openHymnByNum('er')">兒詩</button>
       <button class="cat-btn cat-xg" onclick="openHymnByNum('xg')">新詩</button>
+      <button class="cat-btn cat-tw" onclick="openHymnByNum('tw')">台語</button>
     </div>
   </div>
 </div>
@@ -369,6 +371,7 @@ body.mode-text .font-btn { display: inline-block; flex-shrink: 0; }
       <button class="toc-cat-btn cat-xg" data-cat="xg" onclick="switchTocCat('xg')">新詩</button>
       <button class="toc-cat-btn cat-xb" data-cat="xb" onclick="switchTocCat('xb')">新頌</button>
       <button class="toc-cat-btn cat-er" data-cat="er" onclick="switchTocCat('er')">兒詩</button>
+      <button class="toc-cat-btn cat-tw" data-cat="tw" onclick="switchTocCat('tw')">台語詩歌</button>
     </div>
     <input id="toc-search" placeholder="搜尋詩歌名稱或編號…" oninput="filterToc(this.value)">
     <div id="toc-list"></div>
@@ -428,7 +431,18 @@ const CATS = {
   xg: { label: '新詩',     score: 'lyrics_xg_score', text: 'lyrics_xg_text', prefix: 'xg', tocFile: 'toc_xg_eng2ch.txt' },
   xb: { label: '新頌',     score: 'lyrics_xb_score', text: 'lyrics_xb_text', prefix: 'xb', tocFile: 'toc_xb_pinyin.txt' },
   er: { label: '兒詩',     score: 'lyrics_er_score', text: 'lyrics_er_text', prefix: 'er', tocFile: 'toc_er_stroke.txt' },
+  // 台語詩歌: stored in this repo under tw/ (add tw/score/twN.png, tw/text/twN.txt, and a line in tw/toc.txt)
+  tw: { label: '台語詩歌', score: 'tw/score', text: 'tw/text', prefix: 'tw', toc: 'tw/toc.txt', local: true },
 };
+
+function textUrl(cat, num) {
+  const c = CATS[cat];
+  return (c.local ? '' : BASE) + c.text + '/' + c.prefix + num + '.txt';
+}
+function tocUrl(cat) {
+  const c = CATS[cat];
+  return c.local ? c.toc : BASE + 'lyrics_toc/' + c.tocFile;
+}
 
 // er score uses NO prefix (just "1.png", not "er1.png")
 const SCORE_NOPREFIX = { er: true };
@@ -636,7 +650,7 @@ async function loadScore(cat, num) {
   const catInfo = CATS[cat];
   const noPrefix = SCORE_NOPREFIX[cat];
   const prefix = noPrefix ? '' : catInfo.prefix;
-  const scoreBase = REMOTE + catInfo.score + '/';
+  const scoreBase = (catInfo.local ? '' : REMOTE) + catInfo.score + '/';
 
   // Show loading
   const loading = document.getElementById('score-loading');
@@ -710,11 +724,21 @@ function navWithinScore(dir) {
 
 // Navigate to adjacent hymn
 function navHymn(dir) {
-  if (dir === -1 && !navWithinScore(-1)) {
-    openHymn(currentCat, currentNum - 1);
-  } else if (dir === 1 && !navWithinScore(1)) {
-    openHymn(currentCat, currentNum + 1);
+  if (!navWithinScore(dir)) openAdjacentHymn(dir);
+}
+
+// Local categories have gaps in numbering: step through the numbers listed in their TOC
+async function openAdjacentHymn(dir) {
+  const cat = currentCat;
+  let next = currentNum + dir;
+  if (CATS[cat].local) {
+    try {
+      if (!tocCache[cat]) tocCache[cat] = parseToc(await fetch(tocUrl(cat)).then(r => r.text()));
+      const nums = tocCache[cat].map(h => h.num).sort((a, b) => a - b);
+      next = nums[nums.indexOf(currentNum) + dir];
+    } catch(e) {}
   }
+  if (next >= 1) openHymn(cat, next);
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -736,7 +760,7 @@ document.getElementById('text-area').addEventListener('touchstart', e => {
 document.getElementById('text-area').addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - textTouchX;
   const dy = e.changedTouches[0].clientY - textTouchY;
-  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) openHymn(currentCat, currentNum + (dx < 0 ? 1 : -1));
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) openAdjacentHymn(dx < 0 ? 1 : -1);
 }, { passive: true });
 
 // ──────────────────────────────────────────────────────────────
@@ -789,10 +813,12 @@ async function downloadOffline() {
   btn.disabled = true;
   try {
     await loadLyricsIndex();
-    const urls = Object.values(CATS).map(c => BASE + 'lyrics_toc/' + c.tocFile);
+    const urls = Object.keys(CATS).map(tocUrl);
     for (const h of lyricsIndex) {
-      const c = CATS[h.cat];
-      if (c) urls.push(BASE + c.text + '/' + c.prefix + h.num + '.txt');
+      if (!CATS[h.cat]) continue;
+      urls.push(textUrl(h.cat, h.num));
+      // local categories are small: keep their score images offline too
+      if (CATS[h.cat].local) urls.push(CATS[h.cat].score + '/' + CATS[h.cat].prefix + h.num + '.png');
     }
     const cache = await caches.open(OFFLINE_CACHE);
     let done = 0, failed = 0, i = 0;
@@ -871,9 +897,8 @@ async function loadMediaForHymn(cat, num) {
 // LYRICS
 // ──────────────────────────────────────────────────────────────
 async function loadLyricsTitle(cat, num) {
-  const catInfo = CATS[cat];
   try {
-    const url = BASE + catInfo.text + '/' + catInfo.prefix + num + '.txt';
+    const url = textUrl(cat, num);
     const txt = await fetch(url).then(r => r.ok ? r.text() : null);
     if (txt) {
       const lines = txt.split('\n');
@@ -938,7 +963,7 @@ async function switchTocCat(cat) {
 
   if (!tocCache[cat]) {
     document.getElementById('toc-list').innerHTML = '<div style="padding:20px;text-align:center;color:#c9a87a"><div class="spinner" style="margin:auto"></div></div>';
-    const txt = await fetch(BASE + 'lyrics_toc/' + CATS[cat].tocFile).then(r=>r.text());
+    const txt = await fetch(tocUrl(cat)).then(r=>r.text());
     tocCache[cat] = parseToc(txt);
   }
   tocAllHymns = tocCache[cat];

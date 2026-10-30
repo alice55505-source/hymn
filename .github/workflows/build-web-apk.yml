@@ -8,6 +8,7 @@ on:
       - 'sw.js'
       - 'manifest.json'
       - 'icon-*.png'
+      - 'tw/**'
       - 'android-app/**'
       - '.github/workflows/build-web-apk.yml'
   workflow_dispatch:
@@ -56,6 +57,7 @@ jobs:
           mkdir -p android-app/app/src/main/assets
           cp index.html lyrics-index.txt sw.js manifest.json android-app/app/src/main/assets/
           cp icon-192.png icon-512.png android-app/app/src/main/assets/
+          cp -r tw android-app/app/src/main/assets/
 
           # Bundle hymn text lyrics and TOC for offline use
           for d in lyrics_db_text lyrics_bb_text lyrics_xg_text lyrics_xb_text lyrics_er_text lyrics_toc; do
