@@ -116,7 +116,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   font-size: 28px; cursor: pointer; padding: 0 6px;
   line-height: 1;
 }
-#content-info { flex: 1; }
+#content-info { flex: 1; min-width: 0; }
 #content-cat  { font-size: 11px; color: var(--text2); }
 #content-title { font-size: 15px; font-weight: bold; color: var(--text); }
 #yt-btn {
@@ -225,7 +225,13 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 }
 body.mode-text #score-area { display: none; }
 body.mode-text #text-area { display: block; }
-body.mode-text .font-btn { display: inline-block; }
+body.mode-text .font-btn { display: inline-block; flex-shrink: 0; }
+#share-btn { width: auto; padding: 0 8px; font-size: 13px; }
+#toast {
+  position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%);
+  background: rgba(60,35,15,0.9); color: #fff; padding: 8px 16px; border-radius: 16px;
+  font-size: 14px; z-index: 400; display: none;
+}
 
 /* settings overlay */
 #settings-overlay {
@@ -331,6 +337,7 @@ body.mode-text .font-btn { display: inline-block; }
     </div>
     <button class="font-btn" onclick="changeFont(-2)">A−</button>
     <button class="font-btn" onclick="changeFont(2)">A+</button>
+    <button class="font-btn" id="share-btn" onclick="shareLyrics()">分享</button>
     <button id="yt-btn">▶ 影音</button>
   </div>
 
@@ -395,6 +402,8 @@ body.mode-text .font-btn { display: inline-block; }
     <div id="offline-status">下載後，純文字模式不需網路也能使用</div>
   </div>
 </div>
+
+<div id="toast"></div>
 
 <!-- PWA INSTALL BANNER -->
 <div id="install-banner">
@@ -887,6 +896,24 @@ function renderTextView(txt) {
   const lines = txt.replace(/\r/g, '').split('\n');
   meta.textContent = lines.slice(2, 4).filter(l => l.trim()).join('　');
   body.textContent = lines.slice(4).join('\n').replace(/^\n+/, '').trimEnd();
+}
+
+// Share current hymn as plain text (system share sheet, or copy as fallback)
+async function shareLyrics() {
+  const title = document.getElementById('content-cat').textContent + ' ' + document.getElementById('content-title').textContent.replace(/\s+/g, ' ');
+  const body = document.getElementById('text-body').textContent;
+  const text = title + '\n\n' + body;
+  if (navigator.share) {
+    try { await navigator.share({ title, text }); } catch(e) {}
+    return;
+  }
+  try { await navigator.clipboard.writeText(text); showToast('已複製歌詞，可貼到 LINE 等 App'); }
+  catch(e) { showToast('無法分享，請長按歌詞選取複製'); }
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.style.display = 'none', 2500);
 }
 
 function closeContent() {
