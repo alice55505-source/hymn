@@ -400,9 +400,9 @@ body.mode-text .font-btn { display: inline-block; }
 // ──────────────────────────────────────────────────────────────
 // CONFIG
 // ──────────────────────────────────────────────────────────────
-const BASE = location.hostname === 'hymn.app.local'
-  ? 'https://hymn.app.local/'
-  : 'https://raw.githubusercontent.com/cmeng-git/hymnchtv/master/hymnchtv/src/main/assets/';
+const REMOTE = 'https://raw.githubusercontent.com/cmeng-git/hymnchtv/master/hymnchtv/src/main/assets/';
+// APK bundles lyrics text + TOC only; score images and media list always come from REMOTE
+const BASE = location.hostname === 'hymn.app.local' ? 'https://hymn.app.local/' : REMOTE;
 
 const CATS = {
   db: { label: '大本詩歌', score: 'lyrics_db_score', text: 'lyrics_db_text', prefix: 'db', tocFile: 'toc_db_eng2ch.txt' },
@@ -618,7 +618,7 @@ async function loadScore(cat, num) {
   const catInfo = CATS[cat];
   const noPrefix = SCORE_NOPREFIX[cat];
   const prefix = noPrefix ? '' : catInfo.prefix;
-  const scoreBase = BASE + catInfo.score + '/';
+  const scoreBase = REMOTE + catInfo.score + '/';
 
   // Show loading
   const loading = document.getElementById('score-loading');
@@ -768,7 +768,7 @@ loadSettings();
 async function loadMediaForHymn(cat, num) {
   if (!Object.keys(mediaMap).length) {
     try {
-      const txt = await fetch(BASE + 'url_import.txt').then(r=>r.text());
+      const txt = await fetch(REMOTE + 'url_import.txt').then(r=>r.text());
       for (const line of txt.split('\n')) {
         const p = line.trim().split(',');
         if (p.length < 5) continue;
