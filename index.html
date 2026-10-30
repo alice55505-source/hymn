@@ -159,19 +159,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 }
 
 
-/* lyrics toggle */
-#lyrics-panel {
-  max-height: 0; overflow: hidden; transition: max-height 0.3s;
-  background: var(--surface); color: var(--text);
-}
-#lyrics-panel.open { max-height: 40vh; overflow-y: auto; }
-#lyrics-content { padding: 12px 16px; font-size: 15px; line-height: 1.9; white-space: pre-wrap; }
-#lyrics-toggle {
-  background: var(--surface); border: none; border-top: 1px solid rgba(120,80,30,0.18);
-  color: var(--accent2); width: 100%; padding: 6px; font-size: 13px; cursor: pointer;
-  flex-shrink: 0;
-}
-
 /* TOC overlay */
 #toc-overlay {
   position: fixed; inset: 0; z-index: 200;
@@ -236,9 +223,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   border-radius: 6px; width: 36px; height: 32px; font-size: 15px; font-weight: bold;
   cursor: pointer; display: none;
 }
-body.mode-text #score-area,
-body.mode-text #lyrics-toggle,
-body.mode-text #lyrics-panel { display: none; }
+body.mode-text #score-area { display: none; }
 body.mode-text #text-area { display: block; }
 body.mode-text .font-btn { display: inline-block; }
 
@@ -355,11 +340,6 @@ body.mode-text .font-btn { display: inline-block; }
       <span>載入中…</span>
     </div>
 <div id="page-indicator"></div>
-  </div>
-
-  <button id="lyrics-toggle" onclick="toggleLyrics()">▼ 顯示歌詞</button>
-  <div id="lyrics-panel">
-    <div id="lyrics-content"></div>
   </div>
 </div>
 
@@ -616,9 +596,6 @@ async function openHymn(cat, num) {
   document.getElementById('content-cat').textContent = catInfo.label;
   document.getElementById('content-title').textContent = displayNum + ' 首';
   document.getElementById('yt-btn').style.display = 'none';
-  document.getElementById('lyrics-panel').classList.remove('open');
-  document.getElementById('lyrics-toggle').textContent = '▼ 顯示歌詞';
-  document.getElementById('lyrics-content').textContent = '';
   document.getElementById('text-meta').textContent = '';
   document.getElementById('text-body').innerHTML = '<div id="text-loading"><div class="spinner" style="margin:auto"></div></div>';
   document.getElementById('text-area').scrollTop = 0;
@@ -825,7 +802,6 @@ async function loadLyricsTitle(cat, num) {
         const displayTitle = isFuTitle ? '附 ' + (num - DB_FU_OFFSET) : '第 ' + num;
         document.getElementById('content-title').textContent = displayTitle + ' 首　' + title;
       }
-      document.getElementById('lyrics-content').textContent = s2t(txt);
       if (cat === currentCat && num === currentNum) renderTextView(s2t(txt));
     } else if (cat === currentCat && num === currentNum) renderTextView(null);
   } catch(e) { if (cat === currentCat && num === currentNum) renderTextView(null); }
@@ -839,13 +815,6 @@ function renderTextView(txt) {
   const lines = txt.replace(/\r/g, '').split('\n');
   meta.textContent = lines.slice(2, 4).filter(l => l.trim()).join('　');
   body.textContent = lines.slice(4).join('\n').replace(/^\n+/, '').trimEnd();
-}
-
-function toggleLyrics() {
-  const panel = document.getElementById('lyrics-panel');
-  const btn = document.getElementById('lyrics-toggle');
-  const isOpen = panel.classList.toggle('open');
-  btn.textContent = isOpen ? '▲ 隱藏歌詞' : '▼ 顯示歌詞';
 }
 
 function closeContent() {
