@@ -808,6 +808,7 @@ async function downloadOffline() {
       btn.textContent = '✓ 已下載全部歌詞';
       status.textContent = '純文字模式已可離線使用';
       try { localStorage.setItem('hymn_offline', '1'); } catch(e) {}
+      offlineDone = true;
     }
   } catch(e) {
     btn.textContent = '下載全部歌詞（約 2 MB）';
@@ -815,12 +816,21 @@ async function downloadOffline() {
   }
   btn.disabled = false;
 }
-try {
-  if (localStorage.getItem('hymn_offline') === '1') {
-    document.getElementById('offline-btn').textContent = '✓ 已下載全部歌詞（再按一次可更新）';
-    document.getElementById('offline-status').textContent = '純文字模式已可離線使用';
-  }
-} catch(e) {}
+let offlineDone = false;
+try { offlineDone = localStorage.getItem('hymn_offline') === '1'; } catch(e) {}
+if (offlineDone) {
+  document.getElementById('offline-btn').textContent = '✓ 已下載全部歌詞（再按一次可更新）';
+  document.getElementById('offline-status').textContent = '純文字模式已可離線使用';
+}
+// Installed to home screen (or just installed): download lyrics automatically once.
+// Retries on next launch if it didn't finish.
+const isStandalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function autoDownloadOffline() {
+  if (offlineDone || !navigator.onLine || document.getElementById('offline-btn').disabled) return;
+  downloadOffline();
+}
+if (isStandalone) setTimeout(autoDownloadOffline, 3000);
+window.addEventListener('appinstalled', () => setTimeout(autoDownloadOffline, 1000));
 function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); }
 loadSettings();
 
