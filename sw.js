@@ -1,4 +1,5 @@
-const CACHE_NAME = 'hymnch-v4';
+const CACHE_NAME = 'hymnch-v5';
+const OFFLINE_CACHE = 'hymn-offline'; // lyrics downloaded from settings; never auto-deleted
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -18,7 +19,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== OFFLINE_CACHE).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -30,7 +31,7 @@ self.addEventListener('fetch', e => {
   if (url.hostname === 'raw.githubusercontent.com') {
     e.respondWith(
       caches.open(CACHE_NAME).then(async cache => {
-        const cached = await cache.match(e.request);
+        const cached = await caches.match(e.request);
         if (cached) return cached;
         const res = await fetch(e.request);
         if (res.ok) cache.put(e.request, res.clone());
