@@ -57,7 +57,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   border-radius: 8px; color: var(--text); font-size: 14px; outline: none;
 }
 #search-input::placeholder { color: var(--text3); }
-#toc-btn, #search-btn {
+#toc-btn, #search-btn, #settings-btn {
   height: 38px; padding: 0 14px; border: 1px solid rgba(120,80,30,0.3);
   border-radius: 8px; background: rgba(120,80,30,0.1); color: var(--accent);
   font-size: 13px; cursor: pointer; white-space: nowrap;
@@ -228,6 +228,50 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   position: sticky; top: 0;
 }
 
+/* ── TEXT MODE ── */
+#text-area {
+  flex: 1; overflow-y: auto; display: none;
+  padding: 16px 18px 40px; -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+#text-meta { font-size: 13px; color: var(--text3); line-height: 1.6; margin-bottom: 12px; white-space: pre-wrap; }
+#text-body { line-height: 1.75; white-space: pre-wrap; color: var(--text); user-select: text; }
+#text-loading { text-align: center; color: var(--accent); padding: 40px 0; }
+.font-btn {
+  background: rgba(120,80,30,0.1); color: var(--accent); border: 1px solid rgba(120,80,30,0.3);
+  border-radius: 6px; width: 36px; height: 32px; font-size: 15px; font-weight: bold;
+  cursor: pointer; display: none;
+}
+body.mode-text #score-area,
+body.mode-text #lyrics-toggle,
+body.mode-text #lyrics-panel { display: none; }
+body.mode-text #text-area { display: block; }
+body.mode-text .font-btn { display: inline-block; }
+
+/* settings overlay */
+#settings-overlay {
+  position: fixed; inset: 0; z-index: 250;
+  background: rgba(20,10,0,0.55);
+  display: none; flex-direction: column;
+}
+#settings-overlay.open { display: flex; }
+#settings-panel {
+  background: var(--surface); margin-top: auto;
+  border-radius: 16px 16px 0 0; padding: 12px 16px 24px;
+}
+.set-label { font-size: 13px; color: var(--text2); margin: 14px 0 8px; }
+.seg { display: flex; gap: 8px; }
+.seg button {
+  flex: 1; height: 44px; border-radius: 8px; font-size: 15px; cursor: pointer;
+  border: 1px solid rgba(120,80,30,0.3); background: rgba(120,80,30,0.08); color: var(--text2);
+}
+.seg button.active { background: var(--accent); color: #fff; font-weight: bold; }
+#font-row { display: flex; align-items: center; gap: 10px; }
+#font-range { flex: 1; accent-color: var(--accent); }
+#font-val { min-width: 44px; text-align: right; font-size: 14px; color: var(--accent); }
+#font-preview { margin-top: 10px; color: var(--text); line-height: 1.6; }
+#font-section.hidden { display: none; }
+
 /* PWA install banner */
 #install-banner {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
@@ -258,6 +302,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
     <input id="search-input" placeholder="搜尋詩歌名稱或歌詞…" type="search" autocomplete="off" onkeydown="if(event.key==='Enter')doSearch()">
     <button id="search-btn" onclick="doSearch()">搜尋</button>
     <button id="toc-btn" onclick="openToc('db')">目錄</button>
+    <button id="settings-btn" onclick="openSettings()">⚙</button>
   </div>
 
   <div id="keyboard">
@@ -301,7 +346,14 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div id="content-cat"></div>
       <div id="content-title"></div>
     </div>
+    <button class="font-btn" onclick="changeFont(-2)">A−</button>
+    <button class="font-btn" onclick="changeFont(2)">A+</button>
     <button id="yt-btn">▶ 影音</button>
+  </div>
+
+  <div id="text-area">
+    <div id="text-meta"></div>
+    <div id="text-body"></div>
   </div>
 
   <div id="score-area">
@@ -335,6 +387,31 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
     </div>
     <input id="toc-search" placeholder="搜尋詩歌名稱或編號…" oninput="filterToc(this.value)">
     <div id="toc-list"></div>
+  </div>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div id="settings-panel">
+    <div style="display:flex;align-items:center;padding-bottom:4px">
+      <span style="flex:1;font-size:16px;font-weight:bold;color:var(--text)">設定</span>
+      <button style="background:none;border:none;color:var(--accent2);font-size:24px;cursor:pointer" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="set-label">顯示模式</div>
+    <div class="seg">
+      <button data-mode="score" onclick="setMode('score')">圖片樂譜</button>
+      <button data-mode="text" onclick="setMode('text')">純文字（大字）</button>
+    </div>
+    <div id="font-section">
+      <div class="set-label">字體大小</div>
+      <div id="font-row">
+        <span style="font-size:13px">A</span>
+        <input id="font-range" type="range" min="16" max="60" step="2" oninput="setFont(+this.value)">
+        <span style="font-size:22px">A</span>
+        <span id="font-val"></span>
+      </div>
+      <div id="font-preview">但願榮耀歸於聖父，並聖子基督，</div>
+    </div>
   </div>
 </div>
 
@@ -381,6 +458,8 @@ let tocCache = {};
 let tocCurrentCat = 'db';
 let tocAllHymns = [];
 let deferredInstall = null;
+let viewMode = 'score';   // 'score' | 'text'
+let fontSize = 26;        // text mode font size (px)
 let lyricsIndex = null; // loaded on first content search; array of {cat,num,title,body}
 
 // ──────────────────────────────────────────────────────────────
@@ -548,13 +627,16 @@ async function openHymn(cat, num) {
   document.getElementById('lyrics-panel').classList.remove('open');
   document.getElementById('lyrics-toggle').textContent = '▼ 顯示歌詞';
   document.getElementById('lyrics-content').textContent = '';
+  document.getElementById('text-meta').textContent = '';
+  document.getElementById('text-body').innerHTML = '<div id="text-loading"><div class="spinner" style="margin:auto"></div></div>';
+  document.getElementById('text-area').scrollTop = 0;
 
   // Show content view
   document.getElementById('content-view').classList.add('open');
   history.pushState({ hymn: num, cat }, '');
 
-  // Load score images
-  await loadScore(cat, num);
+  // Load score images (score mode only)
+  if (viewMode === 'score') await loadScore(cat, num);
 
   // Load media links (background)
   loadMediaForHymn(cat, num);
@@ -660,6 +742,57 @@ document.getElementById('score-area').addEventListener('touchend', e => {
   if (Math.abs(dx) > 50) navHymn(dx < 0 ? 1 : -1);
 }, { passive: true });
 
+let textTouchX = 0, textTouchY = 0;
+document.getElementById('text-area').addEventListener('touchstart', e => {
+  textTouchX = e.touches[0].clientX; textTouchY = e.touches[0].clientY;
+}, { passive: true });
+document.getElementById('text-area').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - textTouchX;
+  const dy = e.changedTouches[0].clientY - textTouchY;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) openHymn(currentCat, currentNum + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+// ──────────────────────────────────────────────────────────────
+// SETTINGS (display mode / font size)
+// ──────────────────────────────────────────────────────────────
+function loadSettings() {
+  try {
+    const m = localStorage.getItem('hymn_mode');
+    const f = parseInt(localStorage.getItem('hymn_font'));
+    if (m === 'score' || m === 'text') viewMode = m;
+    if (f >= 16 && f <= 60) fontSize = f;
+  } catch(e) {}
+  applySettings();
+}
+function saveSettings() {
+  try {
+    localStorage.setItem('hymn_mode', viewMode);
+    localStorage.setItem('hymn_font', fontSize);
+  } catch(e) {}
+}
+function applySettings() {
+  document.body.classList.toggle('mode-text', viewMode === 'text');
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', b.dataset.mode === viewMode));
+  document.getElementById('font-section').classList.toggle('hidden', viewMode !== 'text');
+  document.getElementById('text-body').style.fontSize = fontSize + 'px';
+  document.getElementById('font-preview').style.fontSize = fontSize + 'px';
+  document.getElementById('font-range').value = fontSize;
+  document.getElementById('font-val').textContent = fontSize + 'px';
+}
+function setMode(m) {
+  const changed = m !== viewMode;
+  viewMode = m; saveSettings(); applySettings();
+  // switching to score while a hymn is open: load its images
+  if (changed && m === 'score' && document.getElementById('content-view').classList.contains('open')) loadScore(currentCat, currentNum);
+}
+function setFont(px) {
+  fontSize = Math.max(16, Math.min(60, px)); saveSettings(); applySettings();
+}
+function changeFont(d) { setFont(fontSize + d); }
+function openSettings() { document.getElementById('settings-overlay').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); }
+loadSettings();
+
 // ──────────────────────────────────────────────────────────────
 // MEDIA (YouTube)
 // ──────────────────────────────────────────────────────────────
@@ -695,14 +828,25 @@ async function loadLyricsTitle(cat, num) {
     if (txt) {
       const lines = txt.split('\n');
       const title = s2t(lines[1]?.trim() || '');
-      if (title) {
+      if (title && cat === currentCat && num === currentNum) {
         const isFuTitle = cat === 'db' && num > DB_FU_OFFSET;
         const displayTitle = isFuTitle ? '附 ' + (num - DB_FU_OFFSET) : '第 ' + num;
         document.getElementById('content-title').textContent = displayTitle + ' 首　' + title;
       }
       document.getElementById('lyrics-content').textContent = s2t(txt);
-    }
-  } catch(e) {}
+      if (cat === currentCat && num === currentNum) renderTextView(s2t(txt));
+    } else if (cat === currentCat && num === currentNum) renderTextView(null);
+  } catch(e) { if (cat === currentCat && num === currentNum) renderTextView(null); }
+}
+
+// Text mode: lines 0-3 are number/title/meter/key, the rest is the body
+function renderTextView(txt) {
+  const meta = document.getElementById('text-meta');
+  const body = document.getElementById('text-body');
+  if (!txt) { meta.textContent = ''; body.textContent = '歌詞暫無'; return; }
+  const lines = txt.replace(/\r/g, '').split('\n');
+  meta.textContent = lines.slice(2, 4).filter(l => l.trim()).join('　');
+  body.textContent = lines.slice(4).join('\n').replace(/^\n+/, '').trimEnd();
 }
 
 function toggleLyrics() {
