@@ -130,11 +130,12 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 #score-area {
   flex: 1; position: relative; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
+  touch-action: none;
 }
 #score-img {
   max-width: 100%; max-height: 100%;
   object-fit: contain; display: block;
-  touch-action: pan-y pinch-zoom;
+  transform-origin: 0 0; will-change: transform;
 }
 #score-loading {
   position: absolute; inset: 0;
@@ -694,6 +695,7 @@ function showPage(idx) {
   img.style.display = 'none';
 
   img.onload = () => {
+    resetZoom();
     loading.style.display = 'none';
     img.style.display = 'block';
     if (currentPages.length > 1) {
@@ -744,13 +746,82 @@ async function openAdjacentHymn(dir) {
 // ──────────────────────────────────────────────────────────────
 // TOUCH SWIPE (score area)
 // ──────────────────────────────────────────────────────────────
-let touchStartX = 0;
-document.getElementById('score-area').addEventListener('touchstart', e => {
-  touchStartX = e.touches[0].clientX;
+// Pinch to zoom, drag to pan, double-tap to zoom in/out.
+// Swipe left/right changes hymn only when not zoomed.
+const scoreArea = document.getElementById('score-area');
+const scoreImg = document.getElementById('score-img');
+let zoom = { s: 1, x: 0, y: 0 };
+let gesture = null;     // {type:'pinch'|'pan'|'swipe', ...}
+let lastTap = 0;
+
+function applyZoom() {
+  const w = scoreImg.clientWidth, h = scoreImg.clientHeight;
+  // keep the image covering its own box (no empty gaps when zoomed)
+  zoom.x = Math.min(0, Math.max(w * (1 - zoom.s), zoom.x));
+  zoom.y = Math.min(0, Math.max(h * (1 - zoom.s), zoom.y));
+  scoreImg.style.transform = zoom.s === 1 ? '' : `translate(${zoom.x}px,${zoom.y}px) scale(${zoom.s})`;
+}
+function resetZoom() { zoom = { s: 1, x: 0, y: 0 }; applyZoom(); }
+// Zoom to scale s keeping screen point (cx,cy) fixed
+function zoomAt(s, cx, cy, from) {
+  const r = scoreImg.getBoundingClientRect();
+  const left = r.left - zoom.x, top = r.top - zoom.y;     // unzoomed box origin
+  const px = (cx - left - from.x) / from.s, py = (cy - top - from.y) / from.s;
+  zoom.s = Math.max(1, Math.min(5, s));
+  zoom.x = cx - left - zoom.s * px;
+  zoom.y = cy - top - zoom.s * py;
+  applyZoom();
+}
+const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+
+scoreArea.addEventListener('touchstart', e => {
+  const t = e.touches;
+  if (t.length === 2) {
+    gesture = { type: 'pinch', d0: dist(t[0], t[1]), from: { ...zoom } };
+  } else if (t.length === 1) {
+    gesture = { type: zoom.s > 1 ? 'pan' : 'swipe', x0: t[0].clientX, y0: t[0].clientY, from: { ...zoom }, moved: false };
+  }
 }, { passive: true });
-document.getElementById('score-area').addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  if (Math.abs(dx) > 50) navHymn(dx < 0 ? 1 : -1);
+
+scoreArea.addEventListener('touchmove', e => {
+  if (!gesture) return;
+  const t = e.touches;
+  if (gesture.type === 'pinch' && t.length === 2) {
+    e.preventDefault();
+    const cx = (t[0].clientX + t[1].clientX) / 2, cy = (t[0].clientY + t[1].clientY) / 2;
+    zoomAt(gesture.from.s * dist(t[0], t[1]) / gesture.d0, cx, cy, gesture.from);
+  } else if (t.length === 1) {
+    const dx = t[0].clientX - gesture.x0, dy = t[0].clientY - gesture.y0;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) gesture.moved = true;
+    if (gesture.type === 'pan') {
+      e.preventDefault();
+      zoom.x = gesture.from.x + dx; zoom.y = gesture.from.y + dy; applyZoom();
+    }
+  }
+}, { passive: false });
+
+scoreArea.addEventListener('touchend', e => {
+  if (!gesture) return;
+  const g = gesture;
+  if (e.touches.length) {
+    // one finger lifted after pinch: continue as pan with the remaining finger
+    if (g.type === 'pinch' && e.touches.length === 1)
+      gesture = { type: 'pan', x0: e.touches[0].clientX, y0: e.touches[0].clientY, from: { ...zoom }, moved: true };
+    return;
+  }
+  gesture = null;
+  const ct = e.changedTouches[0];
+  if (g.type === 'swipe') {
+    const dx = ct.clientX - g.x0;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(ct.clientY - g.y0)) { navHymn(dx < 0 ? 1 : -1); return; }
+  }
+  if (g.type !== 'pinch' && !g.moved) {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      lastTap = 0;
+      if (zoom.s > 1) resetZoom(); else zoomAt(2.5, ct.clientX, ct.clientY, { ...zoom });
+    } else lastTap = now;
+  }
 }, { passive: true });
 
 let textTouchX = 0, textTouchY = 0;

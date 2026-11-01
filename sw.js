@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hymnch-v6';
+const CACHE_NAME = 'hymnch-v7';
 const OFFLINE_CACHE = 'hymn-offline'; // lyrics downloaded from settings; never auto-deleted
 const STATIC_ASSETS = [
   '/',
