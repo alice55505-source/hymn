@@ -1,10 +1,12 @@
-const CACHE_NAME = 'hymnch-v8';
+const CACHE_NAME = 'hymnch-v9';
 const OFFLINE_CACHE = 'hymn-offline'; // lyrics downloaded from settings; never auto-deleted
+const SCORE_CACHE = 'hymn-scores';    // score images downloaded per book; never auto-deleted
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/lyrics-index.txt',
+  '/score-pages.json',
   '/icon-192.png',
   '/icon-512.png'
 ];
@@ -19,7 +21,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== OFFLINE_CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== OFFLINE_CACHE && k !== SCORE_CACHE).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
