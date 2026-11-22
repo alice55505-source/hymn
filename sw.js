@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hymnch-v9';
+const CACHE_NAME = 'hymnch-v10';
 const OFFLINE_CACHE = 'hymn-offline'; // lyrics downloaded from settings; never auto-deleted
 const SCORE_CACHE = 'hymn-scores';    // score images downloaded per book; never auto-deleted
 const STATIC_ASSETS = [

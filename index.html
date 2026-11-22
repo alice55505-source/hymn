@@ -415,7 +415,7 @@ body.mode-text .font-btn { display: inline-block; flex-shrink: 0; }
     <div class="set-label">離線使用</div>
     <button id="offline-btn" onclick="downloadOffline()">下載全部歌詞（約 2 MB）</button>
     <div id="offline-status">下載後，純文字模式不需網路也能使用</div>
-    <div class="set-label">下載樂譜圖片（選擇詩本）</div>
+    <div class="set-label">下載樂譜圖片</div>
     <div id="score-dl-list"></div>
     <div style="font-size:12px;color:var(--text3);margin-top:6px">下載後，圖片樂譜模式不需網路也能看。檔案較大，建議用 Wi-Fi</div>
   </div>
@@ -975,7 +975,7 @@ function autoDownloadOffline() {
 if (isStandalone) setTimeout(autoDownloadOffline, 3000);
 window.addEventListener('appinstalled', () => setTimeout(autoDownloadOffline, 1000));
 // ──────────────────────────────────────────────────────────────
-// SCORE IMAGE DOWNLOAD (per book)
+// SCORE IMAGE DOWNLOAD (all books at once)
 // ──────────────────────────────────────────────────────────────
 const SCORE_CACHE = 'hymn-scores';
 let scoreManifest = null;
@@ -984,56 +984,63 @@ async function loadScoreManifest() {
   try { scoreManifest = await fetch('score-pages.json').then(r => r.ok ? r.json() : null); } catch(e) {}
   return scoreManifest;
 }
-const scoreDlBusy = {};
-function scoreDlState(cat) { try { return localStorage.getItem('hymn_score_' + cat); } catch(e) { return null; } }
-function setScoreDlState(cat, v) {
-  try { v ? localStorage.setItem('hymn_score_' + cat, v) : localStorage.removeItem('hymn_score_' + cat); } catch(e) {}
+let scoreDlBusy = '';
+function scoreDlState() { try { return localStorage.getItem('hymn_scores'); } catch(e) { return null; } }
+function setScoreDlState(v) {
+  try { v ? localStorage.setItem('hymn_scores', v) : localStorage.removeItem('hymn_scores'); } catch(e) {}
 }
+function scoreUrls(m) {
+  const urls = [];
+  for (const cat of Object.keys(CATS)) {
+    if (!m[cat]) continue;
+    const base = REMOTE + CATS[cat].score + '/';
+    for (const f of m[cat].files) urls.push(base + f);
+  }
+  return urls;
+}
+function scoreTotalMb(m) { return Object.keys(CATS).reduce((t, c) => t + (m[c] ? m[c].mb : 0), 0); }
 async function renderScoreDl() {
   const list = document.getElementById('score-dl-list');
   const m = await loadScoreManifest();
-  if (!m) { list.innerHTML = '<div style="font-size:13px;color:var(--text3)">需要網路才能載入詩本清單</div>'; return; }
+  if (!m) { list.innerHTML = '<div style="font-size:13px;color:var(--text3)">需要網路才能載入樂譜清單</div>'; return; }
   list.innerHTML = '';
-  for (const cat of Object.keys(CATS)) {
-    if (!m[cat]) continue;
-    const row = document.createElement('div');
-    row.className = 'score-dl-row';
-    const dl = document.createElement('button');
-    dl.className = 'dl'; dl.id = 'score-dl-' + cat;
-    dl.onclick = () => downloadScores(cat);
-    row.appendChild(dl);
-    const st = scoreDlState(cat);
-    if (scoreDlBusy[cat]) { dl.disabled = true; dl.textContent = scoreDlBusy[cat]; }
-    else if (st === 'done') dl.textContent = '✓ ' + CATS[cat].label + '（已下載，按此更新）';
-    else if (st === 'partial') dl.textContent = CATS[cat].label + '：繼續下載未完成的部分';
-    else dl.textContent = '下載 ' + CATS[cat].label + '（約 ' + m[cat].mb + ' MB）';
-    if (st && !scoreDlBusy[cat]) {
-      const del = document.createElement('button');
-      del.className = 'del'; del.textContent = '刪除';
-      del.onclick = () => deleteScores(cat);
-      row.appendChild(del);
-    }
-    list.appendChild(row);
+  const row = document.createElement('div');
+  row.className = 'score-dl-row';
+  const dl = document.createElement('button');
+  dl.className = 'dl'; dl.id = 'score-dl-btn';
+  dl.style.textAlign = 'center';
+  dl.onclick = downloadScores;
+  row.appendChild(dl);
+  const st = scoreDlState();
+  if (scoreDlBusy) { dl.disabled = true; dl.textContent = scoreDlBusy; }
+  else if (st === 'done') dl.textContent = '✓ 已下載全部樂譜（再按一次可更新）';
+  else if (st === 'partial') dl.textContent = '繼續下載未完成的樂譜';
+  else dl.textContent = '下載全部樂譜圖片（約 ' + scoreTotalMb(m) + ' MB）';
+  if (st && !scoreDlBusy) {
+    const del = document.createElement('button');
+    del.className = 'del'; del.textContent = '刪除';
+    del.onclick = deleteScores;
+    row.appendChild(del);
   }
+  list.appendChild(row);
 }
-async function downloadScores(cat) {
-  if (scoreDlBusy[cat]) return;
+async function downloadScores() {
+  if (scoreDlBusy) return;
   if (!('caches' in window)) { alert('此瀏覽器不支援離線下載'); return; }
   const m = await loadScoreManifest();
-  if (!m || !m[cat]) { alert('需要網路才能下載'); return; }
-  if (!scoreDlState(cat) && !confirm('下載 ' + CATS[cat].label + ' 全部樂譜圖片，約 ' + m[cat].mb + ' MB。\n建議使用 Wi-Fi，要開始嗎？')) return;
+  if (!m) { alert('需要網路才能下載'); return; }
+  if (!scoreDlState() && !confirm('下載全部樂譜圖片，約 ' + scoreTotalMb(m) + ' MB。\n建議使用 Wi-Fi，要開始嗎？')) return;
   try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e) {}
-  const base = REMOTE + CATS[cat].score + '/';
-  const urls = m[cat].files.map(f => base + f);
+  const urls = scoreUrls(m);
   const cache = await caches.open(SCORE_CACHE);
   let done = 0, failed = 0, i = 0;
   const update = () => {
-    scoreDlBusy[cat] = '下載中… ' + done + ' / ' + urls.length;
-    const b = document.getElementById('score-dl-' + cat);
-    if (b) { b.disabled = true; b.textContent = scoreDlBusy[cat]; }
+    scoreDlBusy = '下載中… ' + done + ' / ' + urls.length;
+    const b = document.getElementById('score-dl-btn');
+    if (b) { b.disabled = true; b.textContent = scoreDlBusy; }
   };
   update(); renderScoreDl();
-  setScoreDlState(cat, 'partial');
+  setScoreDlState('partial');
   const worker = async () => {
     while (i < urls.length) {
       const url = urls[i++];
@@ -1047,23 +1054,20 @@ async function downloadScores(cat) {
     }
   };
   await Promise.all(Array.from({ length: 6 }, worker));
-  delete scoreDlBusy[cat];
+  scoreDlBusy = '';
   if (failed) {
-    showToast(CATS[cat].label + '：' + failed + ' 張下載失敗，請再按一次');
+    showToast(failed + ' 張樂譜下載失敗，請再按一次');
   } else {
-    setScoreDlState(cat, 'done');
-    showToast(CATS[cat].label + ' 樂譜已可離線使用');
+    setScoreDlState('done');
+    showToast('全部樂譜已可離線使用');
   }
   renderScoreDl();
 }
-async function deleteScores(cat) {
-  if (scoreDlBusy[cat]) return;
-  if (!confirm('刪除已下載的 ' + CATS[cat].label + ' 樂譜圖片？')) return;
-  const m = await loadScoreManifest();
-  const cache = await caches.open(SCORE_CACHE);
-  const base = REMOTE + CATS[cat].score + '/';
-  if (m && m[cat]) await Promise.all(m[cat].files.map(f => cache.delete(base + f)));
-  setScoreDlState(cat, null);
+async function deleteScores() {
+  if (scoreDlBusy) return;
+  if (!confirm('刪除已下載的全部樂譜圖片？')) return;
+  await caches.delete(SCORE_CACHE);
+  setScoreDlState(null);
   renderScoreDl();
 }
 
