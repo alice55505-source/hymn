@@ -5,6 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'lyrics-index.txt'
+      - 'score-pages.json'
       - 'sw.js'
       - 'manifest.json'
       - 'icon-*.png'
@@ -55,7 +56,7 @@ jobs:
         run: |
           # Copy web assets into android project
           mkdir -p android-app/app/src/main/assets
-          cp index.html lyrics-index.txt sw.js manifest.json android-app/app/src/main/assets/
+          cp index.html lyrics-index.txt score-pages.json sw.js manifest.json android-app/app/src/main/assets/
           cp icon-192.png icon-512.png android-app/app/src/main/assets/
           cp -r tw android-app/app/src/main/assets/
 
@@ -109,7 +110,7 @@ jobs:
           TAG="web-latest"
           gh release create "$TAG" \
             --title "詩歌本 Web App APK" \
-            --notes "將詩歌本網站打包成完全離線 APK。歌詞文字、目錄、搜尋功能全部離線可用。樂譜圖片需聯網。" \
+            --notes "將詩歌本網站打包成完全離線 APK。歌詞文字、目錄、搜尋功能全部離線可用。樂譜圖片可在設定中按詩本下載後離線使用。" \
             --repo alice55505-source/hymn 2>/dev/null || true
           gh release upload "$TAG" hymn-web.apk --clobber \
             --repo alice55505-source/hymn

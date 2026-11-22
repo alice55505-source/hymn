@@ -731,7 +731,23 @@ function showPage(idx) {
     const displayNumErr = isFuErr ? '附 ' + (currentNum - DB_FU_OFFSET) : '第 ' + currentNum;
     loading.innerHTML = '<div style="text-align:center;color:#c9a87a;padding:20px">🎵<br>' + displayNumErr + ' 首<br><small style="color:#7a5c3a">樂譜圖片暫無</small></div>';
   };
-  img.src = currentPages[idx];
+  setScoreSrc(img, currentPages[idx]);
+}
+
+// Use a downloaded copy when available (needed in the APK, which has no service worker)
+let scoreObjUrl = null;
+async function setScoreSrc(img, url) {
+  let src = url;
+  try {
+    if ('caches' in window) {
+      const hit = await caches.match(url);
+      if (hit) {
+        if (scoreObjUrl) URL.revokeObjectURL(scoreObjUrl);
+        scoreObjUrl = src = URL.createObjectURL(await hit.blob());
+      }
+    }
+  } catch(e) {}
+  if (currentPages[currentPage] === url) img.src = src;
 }
 
 // Navigate within multi-page score
